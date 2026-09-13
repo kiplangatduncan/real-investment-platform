@@ -20,6 +20,7 @@ def create_app():
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_blueprint(payments)
+    
     app.register_blueprint(admin)
 
     with app.app_context():
@@ -32,3 +33,8 @@ def create_app():
 def load_user(user_id):
     from .models import User
     return User.query.get(int(user_id))
+from flask import Flask
+
+app = Flask(__name__)
+
+from app import routes
