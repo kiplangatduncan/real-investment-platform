@@ -25,6 +25,12 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+from flask_wtf.csrf import CSRFProtect
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "your-secret-key"
+
+CSRFProtect(app)
 
     return app
 
