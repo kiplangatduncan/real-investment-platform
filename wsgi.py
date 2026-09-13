@@ -1,4 +1,6 @@
-from app import create_app
+import os
+from django.core.wsgi import get_wsgi_application
 
-app = create_app()
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
 
+application = get_wsgi_application()
