@@ -4,6 +4,8 @@ from app.extensions import db
 from app.models import User
 
 auth = Blueprint("auth", __name__)
+import phonenumbers
+from flask import request, flash, redirect, url_for
 
 
 @auth.route("/login", methods=["GET", "POST"])
