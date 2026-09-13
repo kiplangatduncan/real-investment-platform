@@ -1,15 +1,31 @@
 {% extends "base.html" %}
+
+
 {% block content %}
+
+
 <h1>Create account</h1>
+
+
 <form method="post" class="card">
 
+  
+
 <label>Full name<input name="full_name" required></label>
+
+  
   
   
 <label>Email<input type="email" name="email" required></label>
+
+  
   
   
 <label>Phone<input name="phone" placeholder="2547XXXXXXXX" required></label>
+
+  
+
+  
   phone = request.form.get("phone", "").strip()
 
 try:
@@ -27,9 +43,20 @@ try:
 except Exception:
     flash("Invalid phone number format. Use +254712345678")
     return redirect(url_for("auth.register"))
+
+  
   
   
 <label>Password<input type="password" name="password" minlength="10" required></label>
+
+
+  
 <button class="button">Create account</button>
+
+
+  
 </form>
+
+
+
 {% endblock %}
