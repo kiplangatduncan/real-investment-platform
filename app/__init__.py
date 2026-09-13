@@ -1,5 +1,9 @@
 from flask import Flask
+from flask_wtf.csrf import CSRFProtect
+
 from .extensions import db, login_manager
+
+csrf = CSRFProtect()
 
 
 def create_app():
@@ -11,6 +15,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
 
     from .routes.auth import auth
     from .routes.main import main
@@ -20,17 +25,10 @@ def create_app():
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_blueprint(payments)
-    
     app.register_blueprint(admin)
 
     with app.app_context():
         db.create_all()
-from flask_wtf.csrf import CSRFProtect
-
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "your-secret-key"
-
-CSRFProtect(app)
 
     return app
 
@@ -39,8 +37,4 @@ CSRFProtect(app)
 def load_user(user_id):
     from .models import User
     return User.query.get(int(user_id))
-from flask import Flask
-
-app = Flask(__name__)
-
-from app import routes
+    
