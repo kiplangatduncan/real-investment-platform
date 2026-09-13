@@ -4,8 +4,31 @@
 <form method="post" class="card">
 
 <label>Full name<input name="full_name" required></label>
+  
+  
 <label>Email<input type="email" name="email" required></label>
+  
+  
 <label>Phone<input name="phone" placeholder="2547XXXXXXXX" required></label>
+  phone = request.form.get("phone", "").strip()
+
+try:
+    parsed_phone = phonenumbers.parse(phone, None)
+
+    if not phonenumbers.is_valid_number(parsed_phone):
+        flash("Please enter a valid international phone number.")
+        return redirect(url_for("auth.register"))
+
+    phone = phonenumbers.format_number(
+        parsed_phone,
+        phonenumbers.PhoneNumberFormat.E164
+    )
+
+except Exception:
+    flash("Invalid phone number format. Use +254712345678")
+    return redirect(url_for("auth.register"))
+  
+  
 <label>Password<input type="password" name="password" minlength="10" required></label>
 <button class="button">Create account</button>
 </form>
