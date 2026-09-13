@@ -1,3 +1,5 @@
 Django>=5.0
 gunicorn
 whitenoise
+Flask==3.0.3
+gunicorn==23.0.0
