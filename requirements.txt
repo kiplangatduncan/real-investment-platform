@@ -11,3 +11,4 @@ SQLAlchemy==2.0.35
 psycopg2-binary==2.9.10
 whitenoise==6.8.2
 Flask-WTF==1.2.2
+phonenumbers==8.13.45
