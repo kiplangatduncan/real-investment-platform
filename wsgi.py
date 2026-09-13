@@ -1,1 +1,4 @@
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+from app import create_app
+
+app = create_app()
+
