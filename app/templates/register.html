@@ -1,54 +1,216 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Investment Platform</title>
 
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #222;
+        }
 
-{% block content %}
+        .header {
+            background: #0b1f3a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
 
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
 
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 20px;
+        }
 
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
 
-<h1>Create account</h1>
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #0b1f3a;
+        }
 
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
 
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 16px;
+        }
 
+        input:focus {
+            outline: none;
+            border-color: #0b1f3a;
+        }
 
-<form method="post" class="card">
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            background: #0b1f3a;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
+        button:hover {
+            background: #143b69;
+        }
 
-  
-  
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        .message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            background: #ffe5e5;
+            color: #a00000;
+        }
 
+        .login {
+            text-align: center;
+            margin-top: 20px;
+        }
 
-  
-  
-<label>Full name<input name="full_name" required></label>
+        .login a {
+            color: #0b1f3a;
+            font-weight: bold;
+            text-decoration: none;
+        }
 
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px auto;
+                padding: 15px;
+            }
 
+            .card {
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
 
-  
+<body>
 
+    <div class="header">
+        <h1>Investment Platform</h1>
+    </div>
 
+    <div class="container">
 
-  
-  
-<label>Email<input type="email" name="email" required></label>
-  
-<input
-    type="tel"
-    name="phone"
-    placeholder="+254712345678"
-    required>
-  
-<label>Password<input type="password" name="password" minlength="10" required></label>
+        <div class="card">
 
+            <h2>Create Account</h2>
 
-  
-<button class="button">Create account</button>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="message">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
+            <form method="POST" action="{{ url_for('register') }}">
 
-  
-</form>
+                <label for="full_name">Full Name</label>
+                <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    placeholder="Enter your full name"
+                    required
+                >
 
+                <label for="username">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Choose a username"
+                    required
+                >
 
-{% endblock %}
+                <label for="email">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="example@email.com"
+                    required
+                >
+
+                <label for="phone">Phone Number</label>
+                <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    placeholder="+254712345678"
+                    required
+                >
+
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create a password"
+                    minlength="6"
+                    required
+                >
+
+                <label for="confirm_password">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    placeholder="Enter password again"
+                    minlength="6"
+                    required
+                >
+
+                <button type="submit">
+                    Create Account
+                </button>
+
+            </form>
+
+            <div class="login">
+                Already have an account?
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
