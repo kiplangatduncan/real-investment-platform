@@ -1,20 +1,110 @@
 {% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard
+{% endblock %}
+
 {% block content %}
-<h1>Admin</h1>
-<h2>Users</h2>
-<div class="card">
-<table><tr><th>ID</th><th>Email</th><th>Role</th><th>Verified</th></tr>
-{% for u in users %}<tr><td>{{ u.id }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ u.is_verified }}</td></tr>{% endfor %}
-</table>
+
+<h2>Administrator Dashboard</h2>
+
+<div class="grid">
+
+    <div class="card">
+
+        <h3>Total Users</h3>
+
+        <div class="amount">
+            {{ total_users|default(0) }}
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Total Deposits</h3>
+
+        <div class="amount">
+            KSh {{ total_deposits|default(0) }}
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Pending Deposits</h3>
+
+        <div class="amount">
+            {{ pending_deposits|default(0) }}
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Pending Withdrawals</h3>
+
+        <div class="amount">
+            {{ pending_withdrawals|default(0) }}
+        </div>
+
+    </div>
+
 </div>
-<h2>Investment plans</h2>
+
+
 <div class="card">
-{% for p in plans %}<p><strong>{{ p.name }}</strong> — {{ p.minimum_amount }} {{ p.currency }} — {{ "active" if p.active else "inactive" }}</p>{% endfor %}
+
+    <h3>Recent Deposits</h3>
+
+    {% if deposits %}
+
+    <table>
+
+        <tr>
+            <th>User</th>
+            <th>Amount</th>
+            <th>M-PESA Receipt</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+
+        {% for deposit in deposits %}
+
+        <tr>
+
+            <td>
+                {{ deposit.user.name }}
+            </td>
+
+            <td>
+                KSh {{ deposit.amount }}
+            </td>
+
+            <td>
+                {{ deposit.mpesa_receipt }}
+            </td>
+
+            <td>
+                {{ deposit.status }}
+            </td>
+
+            <td>
+                {{ deposit.created_at }}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+    {% else %}
+
+    <p>No deposits available.</p>
+
+    {% endif %}
+
 </div>
-<h2>Recent transactions</h2>
-<div class="card">
-<table><tr><th>User</th><th>Type</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
-{% for t in transactions %}<tr><td>{{ t.user_id }}</td><td>{{ t.tx_type }}</td><td>{{ t.amount }} {{ t.currency }}</td><td>{{ t.status }}</td><td>{{ t.reference }}</td></tr>{% endfor %}
-</table>
-</div>
+
 {% endblock %}
