@@ -1,10 +1,11 @@
 from datetime import datetime
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+
 from app.extensions import db
 
 
-# Supported currencies
 SUPPORTED_CURRENCIES = {
     "KES": "Kenyan Shilling",
     "USD": "US Dollar",
@@ -34,17 +35,21 @@ class User(UserMixin, db.Model):
         nullable=False
     )
 
-    # Legacy balance field kept so your existing routes continue working.
     balance = db.Column(
         db.Float,
         default=0.0,
         nullable=False
     )
 
-    # Default/account currency
     currency = db.Column(
         db.String(3),
         default="KES",
+        nullable=False
+    )
+
+    is_admin = db.Column(
+        db.Boolean,
+        default=False,
         nullable=False
     )
 
@@ -68,16 +73,6 @@ class User(UserMixin, db.Model):
 
 
 class Wallet(db.Model):
-    """
-    Allows one user to have balances in multiple currencies.
-    Example:
-
-    User
-      KES  10,000
-      USD  100
-      EUR  50
-    """
-
     __tablename__ = "wallets"
 
     id = db.Column(
@@ -110,10 +105,7 @@ class Wallet(db.Model):
 
     user = db.relationship(
         "User",
-        backref=db.backref(
-            "wallets",
-            lazy=True
-        )
+        backref=db.backref("wallets", lazy=True)
     )
 
     __table_args__ = (
@@ -152,7 +144,6 @@ class Transaction(db.Model):
         nullable=False
     )
 
-    # Currency used for this transaction
     currency = db.Column(
         db.String(3),
         default="KES",
@@ -160,7 +151,7 @@ class Transaction(db.Model):
     )
 
     reference = db.Column(
-        db.String(100),
+        db.String(150),
         unique=True,
         nullable=True
     )
@@ -176,6 +167,21 @@ class Transaction(db.Model):
         nullable=True
     )
 
+    payment_provider = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    payment_method = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    provider_reference = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
@@ -184,10 +190,7 @@ class Transaction(db.Model):
 
     user = db.relationship(
         "User",
-        backref=db.backref(
-            "transactions",
-            lazy=True
-        )
+        backref=db.backref("transactions", lazy=True)
     )
 
     def __repr__(self):
@@ -199,12 +202,93 @@ class Transaction(db.Model):
         )
 
 
-def get_or_create_wallet(user_id, currency):
-    """
-    Get a user's wallet for a currency.
-    Creates it if it does not exist.
-    """
+class PaymentAccount(db.Model):
+    __tablename__ = "payment_accounts"
 
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    country = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    currency = db.Column(
+        db.String(3),
+        nullable=False
+    )
+
+    payment_method = db.Column(
+        db.String(80),
+        nullable=False
+    )
+
+    provider_name = db.Column(
+        db.String(120),
+        nullable=False
+    )
+
+    account_name = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    account_number = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    phone_number = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    branch = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    additional_details = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    instructions = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    def __repr__(self):
+        return (
+            f"<PaymentAccount "
+            f"{self.country} "
+            f"{self.currency} "
+            f"{self.payment_method}>"
+        )
+
+
+def get_or_create_wallet(user_id, currency):
     currency = currency.upper()
 
     if currency not in SUPPORTED_CURRENCIES:
