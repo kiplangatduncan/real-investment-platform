@@ -1,77 +1,199 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Real Investment Platform</title>
 
-{% block title %}
-Create Account
-{% endblock %}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-{% block content %}
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
 
-<div class="card" style="max-width:500px;margin:auto;">
+        .container {
+            width: 100%;
+            max-width: 450px;
+            margin: 60px auto;
+            padding: 20px;
+        }
 
-    <h2>Create Your Account</h2>
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
 
-    <form method="POST"
-          action="/register">
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #222;
+        }
 
-        <label>Full Name</label>
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
 
-        <input
-            type="text"
-            name="name"
-            placeholder="Enter your full name"
-            required
-        >
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-        <label>Email Address</label>
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
 
-        <input
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            required
-        >
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
 
-        <label>Phone Number</label>
+        input:focus {
+            outline: none;
+            border-color: #6f2dbd;
+        }
 
-        <input
-            type="tel"
-            name="phone"
-            placeholder="07XXXXXXXX"
-            required
-        >
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #6f2dbd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-        <label>Password</label>
+        button:hover {
+            background: #57219a;
+        }
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Create password"
-            minlength="6"
-            required
-        >
+        .messages {
+            margin-bottom: 20px;
+        }
 
-        <label>Confirm Password</label>
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #ffe5e5;
+            color: #a00000;
+        }
 
-        <input
-            type="password"
-            name="confirm_password"
-            placeholder="Confirm password"
-            minlength="6"
-            required
-        >
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+        }
 
-        <button class="btn"
-                type="submit">
-            Create Account
-        </button>
+        .login-link a {
+            color: #6f2dbd;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-    </form>
+        .login-link a:hover {
+            text-decoration: underline;
+        }
 
-    <p>
-        Already have an account?
-        <a href="/login">Login</a>
-    </p>
+        @media (max-width: 500px) {
+            .container {
+                margin: 20px auto;
+            }
+
+            .card {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Create Account</h1>
+
+        <p class="subtitle">
+            Register for your Real Investment Platform account
+        </p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Registration Form -->
+        <form method="POST" action="{{ url_for('auth.register') }}">
+
+            <div class="form-group">
+                <label for="username">Username</label>
+
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    minlength="3"
+                    required
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    minlength="6"
+                    required
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <button type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="login-link">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}">
+                Login here
+            </a>
+        </div>
+
+    </div>
 
 </div>
 
-{% endblock %}
+</body>
+</html>
