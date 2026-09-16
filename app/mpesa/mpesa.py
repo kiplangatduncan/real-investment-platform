@@ -5,6 +5,9 @@ from datetime import datetime
 import requests
 from flask import Blueprint, jsonify, request
 
+from app.extensions import db
+from app.models import Transaction, User
+
 
 mpesa_bp = Blueprint(
     "mpesa",
@@ -18,7 +21,11 @@ mpesa_bp = Blueprint(
 # =========================================================
 
 def get_mpesa_base_url():
-    environment = os.getenv("MPESA_ENV", "sandbox").lower()
+
+    environment = os.getenv(
+        "MPESA_ENV",
+        "sandbox"
+    ).lower()
 
     if environment == "production":
         return "https://api.safaricom.co.ke"
@@ -31,15 +38,23 @@ def get_mpesa_base_url():
 # =========================================================
 
 def get_access_token():
-    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+
+    consumer_key = os.getenv(
+        "MPESA_CONSUMER_KEY"
+    )
+
+    consumer_secret = os.getenv(
+        "MPESA_CONSUMER_SECRET"
+    )
 
     if not consumer_key or not consumer_secret:
         raise RuntimeError(
-            "M-Pesa consumer credentials are not configured."
+            "M-PESA consumer credentials are not configured."
         )
 
-    credentials = f"{consumer_key}:{consumer_secret}"
+    credentials = (
+        f"{consumer_key}:{consumer_secret}"
+    )
 
     encoded_credentials = base64.b64encode(
         credentials.encode("utf-8")
@@ -47,13 +62,15 @@ def get_access_token():
 
     url = (
         f"{get_mpesa_base_url()}"
-        "/oauth/v1/generate?grant_type=client_credentials"
+        "/oauth/v1/generate"
+        "?grant_type=client_credentials"
     )
 
     response = requests.get(
         url,
         headers={
-            "Authorization": f"Basic {encoded_credentials}"
+            "Authorization":
+                f"Basic {encoded_credentials}"
         },
         timeout=30
     )
@@ -62,12 +79,16 @@ def get_access_token():
 
     data = response.json()
 
-    if "access_token" not in data:
+    access_token = data.get(
+        "access_token"
+    )
+
+    if not access_token:
         raise RuntimeError(
-            "M-Pesa did not return an access token."
+            "M-PESA did not return an access token."
         )
 
-    return data["access_token"]
+    return access_token
 
 
 # =========================================================
@@ -75,15 +96,25 @@ def get_access_token():
 # =========================================================
 
 def generate_password(timestamp):
-    shortcode = os.getenv("MPESA_SHORTCODE")
-    passkey = os.getenv("MPESA_PASSKEY")
+
+    shortcode = os.getenv(
+        "MPESA_SHORTCODE"
+    )
+
+    passkey = os.getenv(
+        "MPESA_PASSKEY"
+    )
 
     if not shortcode or not passkey:
         raise RuntimeError(
-            "M-Pesa shortcode or passkey is not configured."
+            "M-PESA shortcode or passkey is not configured."
         )
 
-    raw = f"{shortcode}{passkey}{timestamp}"
+    raw = (
+        f"{shortcode}"
+        f"{passkey}"
+        f"{timestamp}"
+    )
 
     return base64.b64encode(
         raw.encode("utf-8")
@@ -100,7 +131,10 @@ def initiate_stk_push(
     account_reference="INVESTMENT",
     transaction_description="Investment deposit"
 ):
-    shortcode = os.getenv("MPESA_SHORTCODE")
+
+    shortcode = os.getenv(
+        "MPESA_SHORTCODE"
+    )
 
     if not shortcode:
         raise RuntimeError(
@@ -111,11 +145,15 @@ def initiate_stk_push(
         "%Y%m%d%H%M%S"
     )
 
-    password = generate_password(timestamp)
+    password = generate_password(
+        timestamp
+    )
 
     access_token = get_access_token()
 
-    callback_url = os.getenv("MPESA_CALLBACK_URL")
+    callback_url = os.getenv(
+        "MPESA_CALLBACK_URL"
+    )
 
     if not callback_url:
         raise RuntimeError(
@@ -128,25 +166,50 @@ def initiate_stk_push(
     )
 
     payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": int(float(amount)),
-        "PartyA": phone_number,
-        "PartyB": shortcode,
-        "PhoneNumber": phone_number,
-        "CallBackURL": callback_url,
-        "AccountReference": str(account_reference)[:12],
-        "TransactionDesc": str(transaction_description)[:13]
+
+        "BusinessShortCode":
+            shortcode,
+
+        "Password":
+            password,
+
+        "Timestamp":
+            timestamp,
+
+        "TransactionType":
+            "CustomerPayBillOnline",
+
+        "Amount":
+            int(amount),
+
+        "PartyA":
+            phone_number,
+
+        "PartyB":
+            shortcode,
+
+        "PhoneNumber":
+            phone_number,
+
+        "CallBackURL":
+            callback_url,
+
+        "AccountReference":
+            str(account_reference)[:12],
+
+        "TransactionDesc":
+            str(transaction_description)[:13]
     }
 
     response = requests.post(
         url,
         json=payload,
         headers={
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
+            "Authorization":
+                f"Bearer {access_token}",
+
+            "Content-Type":
+                "application/json"
         },
         timeout=30
     )
@@ -160,12 +223,18 @@ def initiate_stk_push(
 # STK PUSH ROUTE
 # =========================================================
 
-@mpesa_bp.route("/stk-push", methods=["POST"])
+@mpesa_bp.route(
+    "/stk-push",
+    methods=["POST"]
+)
 def stk_push():
 
-    data = request.get_json(
-        silent=True
-    ) or request.form
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or request.form
+    )
 
     phone = data.get("phone")
     amount = data.get("amount")
@@ -187,12 +256,14 @@ def stk_push():
         }), 400
 
     try:
+
         amount = float(amount)
 
         if amount <= 0:
             raise ValueError
 
     except (TypeError, ValueError):
+
         return jsonify({
             "success": False,
             "message": "Invalid amount."
@@ -215,11 +286,13 @@ def stk_push():
             "data": result
         })
 
-    except Exception as exc:
+    except Exception:
 
         return jsonify({
             "success": False,
-            "message": str(exc)
+            "message": (
+                "Unable to send the M-PESA payment request."
+            )
         }), 500
 
 
@@ -237,7 +310,7 @@ def mpesa_callback():
         silent=True
     ) or {}
 
-    print("M-Pesa callback received:")
+    print("M-PESA callback received:")
     print(data)
 
     stk_callback = (
@@ -260,6 +333,23 @@ def mpesa_callback():
         )
     )
 
+
+    # -----------------------------------------------------
+    # CALLBACK WITHOUT CHECKOUT ID
+    # -----------------------------------------------------
+
+    if not checkout_request_id:
+
+        return jsonify({
+            "ResultCode": 0,
+            "ResultDesc": "Accepted"
+        })
+
+
+    # -----------------------------------------------------
+    # PAYMENT SUCCESSFUL
+    # -----------------------------------------------------
+
     if result_code == 0:
 
         callback_metadata = (
@@ -279,41 +369,215 @@ def mpesa_callback():
                     "Value"
                 )
 
-        amount = metadata.get("Amount")
+
+        amount = metadata.get(
+            "Amount"
+        )
+
         receipt = metadata.get(
             "MpesaReceiptNumber"
         )
+
         transaction_date = metadata.get(
             "TransactionDate"
         )
+
         phone = metadata.get(
             "PhoneNumber"
         )
 
-        print("Successful M-Pesa payment")
+
+        print("Successful M-PESA payment")
         print("Amount:", amount)
         print("Receipt:", receipt)
         print("Phone:", phone)
-        print(
-            "Transaction Date:",
-            transaction_date
-        )
+        print("Transaction Date:", transaction_date)
         print(
             "Checkout Request ID:",
             checkout_request_id
         )
 
-        # Database/balance update will be connected
-        # here after matching your existing
-        # transaction and user models.
+
+        # -------------------------------------------------
+        # FIND OUR PENDING TRANSACTION
+        # -------------------------------------------------
+
+        transaction = Transaction.query.filter_by(
+            reference=checkout_request_id
+        ).first()
+
+
+        # -------------------------------------------------
+        # UNKNOWN PAYMENT
+        # -------------------------------------------------
+
+        if not transaction:
+
+            print(
+                "No matching transaction found for:",
+                checkout_request_id
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Accepted"
+            })
+
+
+        # -------------------------------------------------
+        # IDEMPOTENCY
+        # -------------------------------------------------
+        #
+        # If this callback has already been processed,
+        # NEVER credit the balance again.
+        #
+
+        if transaction.status == "completed":
+
+            print(
+                "Transaction already completed:",
+                transaction.id
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Already processed"
+            })
+
+
+        # -------------------------------------------------
+        # VERIFY AMOUNT
+        # -------------------------------------------------
+
+        try:
+
+            callback_amount = float(
+                amount
+            )
+
+        except (TypeError, ValueError):
+
+            print(
+                "Invalid callback amount."
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Accepted"
+            })
+
+
+        if callback_amount != float(
+            transaction.amount
+        ):
+
+            transaction.status = "failed"
+
+            transaction.description = (
+                "M-PESA callback amount "
+                "did not match transaction amount."
+            )
+
+            db.session.commit()
+
+            print(
+                "Payment amount mismatch."
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Accepted"
+            })
+
+
+        # -------------------------------------------------
+        # FIND USER
+        # -------------------------------------------------
+
+        user = db.session.get(
+            User,
+            transaction.user_id
+        )
+
+
+        if not user:
+
+            print(
+                "User not found:",
+                transaction.user_id
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Accepted"
+            })
+
+
+        # -------------------------------------------------
+        # CREDIT BALANCE
+        # -------------------------------------------------
+
+        user.balance = (
+            float(user.balance or 0)
+            + float(transaction.amount)
+        )
+
+
+        # -------------------------------------------------
+        # MARK TRANSACTION COMPLETED
+        # -------------------------------------------------
+
+        transaction.status = "completed"
+
+        transaction.description = (
+            f"M-PESA payment confirmed. "
+            f"Receipt: {receipt}"
+        )
+
+
+        db.session.commit()
+
+
+        print(
+            "Balance successfully credited."
+        )
 
     else:
 
+        # -------------------------------------------------
+        # PAYMENT FAILED / CANCELLED
+        # -------------------------------------------------
+
         print(
-            "M-Pesa payment failed:",
+            "M-PESA payment failed:",
             result_code,
             result_desc
         )
+
+
+        transaction = Transaction.query.filter_by(
+            reference=checkout_request_id
+        ).first()
+
+
+        if transaction:
+
+            # Do not overwrite a completed payment.
+            if transaction.status != "completed":
+
+                transaction.status = "failed"
+
+                transaction.description = (
+                    f"M-PESA payment failed: "
+                    f"{result_desc}"
+                )
+
+                db.session.commit()
+
+
+    # -----------------------------------------------------
+    # ACKNOWLEDGE CALLBACK
+    # -----------------------------------------------------
 
     return jsonify({
         "ResultCode": 0,
@@ -325,9 +589,13 @@ def mpesa_callback():
 # QUERY STK PAYMENT STATUS
 # =========================================================
 
-def query_stk_status(checkout_request_id):
+def query_stk_status(
+    checkout_request_id
+):
 
-    shortcode = os.getenv("MPESA_SHORTCODE")
+    shortcode = os.getenv(
+        "MPESA_SHORTCODE"
+    )
 
     if not shortcode:
         raise RuntimeError(
@@ -338,7 +606,9 @@ def query_stk_status(checkout_request_id):
         "%Y%m%d%H%M%S"
     )
 
-    password = generate_password(timestamp)
+    password = generate_password(
+        timestamp
+    )
 
     access_token = get_access_token()
 
@@ -348,18 +618,29 @@ def query_stk_status(checkout_request_id):
     )
 
     payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "CheckoutRequestID": checkout_request_id
+
+        "BusinessShortCode":
+            shortcode,
+
+        "Password":
+            password,
+
+        "Timestamp":
+            timestamp,
+
+        "CheckoutRequestID":
+            checkout_request_id
     }
 
     response = requests.post(
         url,
         json=payload,
         headers={
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
+            "Authorization":
+                f"Bearer {access_token}",
+
+            "Content-Type":
+                "application/json"
         },
         timeout=30
     )
@@ -377,7 +658,9 @@ def query_stk_status(checkout_request_id):
     "/status/<checkout_request_id>",
     methods=["GET"]
 )
-def payment_status(checkout_request_id):
+def payment_status(
+    checkout_request_id
+):
 
     try:
 
@@ -390,9 +673,11 @@ def payment_status(checkout_request_id):
             "data": result
         })
 
-    except Exception as exc:
+    except Exception:
 
         return jsonify({
             "success": False,
-            "message": str(exc)
+            "message": (
+                "Unable to query M-PESA payment status."
+            )
         }), 500
