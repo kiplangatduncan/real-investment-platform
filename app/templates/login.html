@@ -1,49 +1,205 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% block title %}
-Login
-{% endblock %}
+    <title>Login - Real Investment Platform</title>
 
-{% block content %}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-<div class="card"
-     style="max-width:450px;margin:auto;">
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
 
-    <h2>Login to Your Account</h2>
+        .container {
+            width: 100%;
+            max-width: 450px;
+            margin: 60px auto;
+            padding: 20px;
+        }
 
-    <form method="POST"
-          action="/login">
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
 
-        <label>Email or Phone</label>
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
 
-        <input
-            type="text"
-            name="email"
-            placeholder="Email or phone"
-            required
-        >
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
 
-        <label>Password</label>
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-        >
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
 
-        <button class="btn"
-                type="submit">
-            Login
-        </button>
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
 
-    </form>
+        input:focus {
+            outline: none;
+            border-color: #6f2dbd;
+        }
 
-    <p>
-        Don't have an account?
-        <a href="/register">Create account</a>
-    </p>
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #6f2dbd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #57219a;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #ffe5e5;
+            color: #a00000;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .register-link a {
+            color: #6f2dbd;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                margin: 20px auto;
+            }
+
+            .card {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Login</h1>
+
+        <p class="subtitle">
+            Sign in to your Real Investment Platform account
+        </p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Login Form -->
+        <form method="POST" action="{{ url_for('auth.login') }}">
+
+            <div class="form-group">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    required
+                    autocomplete="username"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+            <button type="submit">
+                Login
+            </button>
+
+        </form>
+
+        <div class="register-link">
+            Don't have an account?
+            <a href="{{ url_for('auth.register') }}">
+                Create an account
+            </a>
+        </div>
+
+    </div>
 
 </div>
 
-{% endblock %}
+</body>
+</html>
