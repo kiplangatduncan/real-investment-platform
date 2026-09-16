@@ -1,9 +1,58 @@
 {% extends "base.html" %}
+
+{% block title %}
+Home - Real Investment Platform
+{% endblock %}
+
 {% block content %}
-<section class="hero">
-  <h1>Real Investment Account Platform</h1>
-  <p>Create an account, fund it, and invest through an authorized investment product.</p>
-  <p class="warning">Actual investment performance is determined by the underlying product. No fixed return is hard-coded.</p>
-  <a class="button" href="{{ url_for('auth.register') }}">Create account</a>
-</section>
+
+<div class="card">
+
+    <h1>Welcome to Real Investment Platform</h1>
+
+    <p>
+        Manage your account, make deposits,
+        view transactions and access available
+        investment opportunities.
+    </p>
+
+    <br>
+
+    <a class="btn" href="/register">
+        Create Account
+    </a>
+
+    <a class="btn" href="/login">
+        Login
+    </a>
+
+</div>
+
+<div class="grid">
+
+    <div class="card">
+        <h3>Secure Account</h3>
+        <p>
+            Access your personal account and
+            transaction information.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>Deposits</h3>
+        <p>
+            Deposit funds using the available
+            payment method.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>Transactions</h3>
+        <p>
+            Keep track of your account activity.
+        </p>
+    </div>
+
+</div>
+
 {% endblock %}
