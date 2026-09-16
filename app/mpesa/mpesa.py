@@ -10,13 +10,13 @@ from app.models import Transaction, User
 
 
 # =========================================================
-# M-PESA BLUEPRINT
+# BLUEPRINT
 # =========================================================
 
 mpesa_bp = Blueprint(
     "mpesa",
     __name__,
-    url_prefix="/mpesa"
+    url_prefix="/mpesa",
 )
 
 
@@ -27,7 +27,7 @@ mpesa_bp = Blueprint(
 def get_mpesa_base_url():
     environment = os.getenv(
         "MPESA_ENV",
-        "sandbox"
+        "sandbox",
     ).strip().lower()
 
     if environment == "production":
@@ -37,7 +37,7 @@ def get_mpesa_base_url():
 
 
 # =========================================================
-# GET M-PESA ACCESS TOKEN
+# GET ACCESS TOKEN
 # =========================================================
 
 def get_access_token():
@@ -80,7 +80,7 @@ def get_access_token():
             "Authorization":
                 f"Basic {encoded_credentials}"
         },
-        timeout=30
+        timeout=30,
     )
 
     response.raise_for_status()
@@ -135,6 +135,57 @@ def generate_password(timestamp):
 
 
 # =========================================================
+# NORMALIZE PHONE NUMBER
+# =========================================================
+
+def normalize_phone(phone):
+
+    if phone is None:
+        return None
+
+    phone = str(phone).strip()
+
+    # Remove spaces and common separators.
+    phone = (
+        phone
+        .replace(" ", "")
+        .replace("-", "")
+        .replace("+", "")
+    )
+
+    # Kenya local format:
+    # 07XXXXXXXX -> 2547XXXXXXXX
+    if phone.startswith("07") and len(phone) == 10:
+        phone = "254" + phone[1:]
+
+    # Kenya local format:
+    # 01XXXXXXXX -> 2541XXXXXXXX
+    elif phone.startswith("01") and len(phone) == 10:
+        phone = "254" + phone[1:]
+
+    # Already in international format.
+    elif phone.startswith("254"):
+        pass
+
+    else:
+        raise ValueError(
+            "Invalid Kenyan M-PESA phone number."
+        )
+
+    if not phone.isdigit():
+        raise ValueError(
+            "Phone number must contain digits only."
+        )
+
+    if len(phone) != 12:
+        raise ValueError(
+            "Phone number must contain 12 digits in 254XXXXXXXXX format."
+        )
+
+    return phone
+
+
+# =========================================================
 # INITIATE STK PUSH
 # =========================================================
 
@@ -142,7 +193,7 @@ def initiate_stk_push(
     phone_number,
     amount,
     account_reference="INVESTMENT",
-    transaction_description="Investment deposit"
+    transaction_description="Investment deposit",
 ):
 
     shortcode = os.getenv(
@@ -154,10 +205,9 @@ def initiate_stk_push(
             "MPESA_SHORTCODE is not configured."
         )
 
-    if not phone_number:
-        raise ValueError(
-            "Phone number is required."
-        )
+    phone_number = normalize_phone(
+        phone_number
+    )
 
     try:
         amount = float(amount)
@@ -170,6 +220,8 @@ def initiate_stk_push(
         raise ValueError(
             "Payment amount must be greater than zero."
         )
+
+    amount = int(round(amount))
 
     timestamp = datetime.now().strftime(
         "%Y%m%d%H%M%S"
@@ -205,13 +257,13 @@ def initiate_stk_push(
         "TransactionType":
             "CustomerPayBillOnline",
 
-        "Amount": int(amount),
+        "Amount": amount,
 
-        "PartyA": str(phone_number),
+        "PartyA": phone_number,
 
         "PartyB": shortcode,
 
-        "PhoneNumber": str(phone_number),
+        "PhoneNumber": phone_number,
 
         "CallBackURL": callback_url,
 
@@ -219,7 +271,7 @@ def initiate_stk_push(
             str(account_reference)[:12],
 
         "TransactionDesc":
-            str(transaction_description)[:13]
+            str(transaction_description)[:13],
     }
 
     response = requests.post(
@@ -229,9 +281,9 @@ def initiate_stk_push(
             "Authorization":
                 f"Bearer {access_token}",
             "Content-Type":
-                "application/json"
+                "application/json",
         },
-        timeout=30
+        timeout=30,
     )
 
     response.raise_for_status()
@@ -245,7 +297,7 @@ def initiate_stk_push(
 
 @mpesa_bp.route(
     "/stk-push",
-    methods=["POST"]
+    methods=["POST"],
 )
 def stk_push():
 
@@ -256,26 +308,33 @@ def stk_push():
         or request.form
     )
 
-    phone = data.get("phone")
-    amount = data.get("amount")
+    phone = data.get(
+        "phone"
+    )
+
+    amount = data.get(
+        "amount"
+    )
 
     reference = data.get(
         "reference",
-        "INVESTMENT"
+        "INVESTMENT",
     )
 
     if not phone:
+
         return jsonify({
             "success": False,
             "message":
-                "Phone number is required."
+                "Phone number is required.",
         }), 400
 
     if not amount:
+
         return jsonify({
             "success": False,
             "message":
-                "Amount is required."
+                "Amount is required.",
         }), 400
 
     try:
@@ -290,7 +349,7 @@ def stk_push():
         return jsonify({
             "success": False,
             "message":
-                "Invalid amount."
+                "Invalid amount.",
         }), 400
 
     try:
@@ -300,36 +359,38 @@ def stk_push():
             amount=amount,
             account_reference=reference,
             transaction_description=
-                "Investment deposit"
+                "Investment deposit",
         )
 
         return jsonify({
             "success": True,
 
-            "message":
-                result.get(
-                    "CustomerMessage",
-                    "STK push sent successfully."
-                ),
+            "message": result.get(
+                "CustomerMessage",
+                "STK push sent successfully.",
+            ),
 
-            "data": result
+            "data": result,
         })
 
-    except Exception as error:
+    except ValueError as exc:
+
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 400
+
+    except Exception as exc:
 
         print(
             "M-PESA STK PUSH ERROR:",
-            repr(error)
+            repr(exc),
         )
 
         return jsonify({
             "success": False,
-
             "message":
                 "Unable to send the M-PESA payment request.",
-
-            "error":
-                str(error)
         }), 500
 
 
@@ -339,7 +400,7 @@ def stk_push():
 
 @mpesa_bp.route(
     "/callback",
-    methods=["POST"]
+    methods=["POST"],
 )
 def mpesa_callback():
 
@@ -352,13 +413,17 @@ def mpesa_callback():
 
     print(
         "M-PESA callback received:",
-        data
+        data,
     )
 
-    stk_callback = (
-        data
-        .get("Body", {})
-        .get("stkCallback", {})
+    body = data.get(
+        "Body",
+        {},
+    )
+
+    stk_callback = body.get(
+        "stkCallback",
+        {},
     )
 
     result_code = stk_callback.get(
@@ -375,18 +440,30 @@ def mpesa_callback():
         )
     )
 
+    # -----------------------------------------------------
+    # NO CHECKOUT REQUEST ID
+    # -----------------------------------------------------
+
     if not checkout_request_id:
 
         return jsonify({
             "ResultCode": 0,
-            "ResultDesc":
-                "Accepted"
+            "ResultDesc": "Accepted",
         })
 
 
-    # =====================================================
-    # SUCCESSFUL PAYMENT
-    # =====================================================
+    # -----------------------------------------------------
+    # FIND TRANSACTION
+    # -----------------------------------------------------
+
+    transaction = Transaction.query.filter_by(
+        reference=checkout_request_id
+    ).first()
+
+
+    # -----------------------------------------------------
+    # PAYMENT SUCCESSFUL
+    # -----------------------------------------------------
 
     if result_code == 0:
 
@@ -394,11 +471,11 @@ def mpesa_callback():
             stk_callback
             .get(
                 "CallbackMetadata",
-                {}
+                {},
             )
             .get(
                 "Item",
-                []
+                [],
             )
         )
 
@@ -406,9 +483,12 @@ def mpesa_callback():
 
         for item in callback_metadata:
 
-            name = item.get("Name")
+            name = item.get(
+                "Name"
+            )
 
             if name:
+
                 metadata[name] = item.get(
                     "Value"
                 )
@@ -421,12 +501,12 @@ def mpesa_callback():
             "MpesaReceiptNumber"
         )
 
-        phone = metadata.get(
-            "PhoneNumber"
-        )
-
         transaction_date = metadata.get(
             "TransactionDate"
+        )
+
+        phone = metadata.get(
+            "PhoneNumber"
         )
 
         print(
@@ -435,78 +515,68 @@ def mpesa_callback():
 
         print(
             "Amount:",
-            amount
+            amount,
         )
 
         print(
             "Receipt:",
-            receipt
+            receipt,
         )
 
         print(
             "Phone:",
-            phone
+            phone,
         )
 
         print(
             "Transaction Date:",
-            transaction_date
+            transaction_date,
         )
 
         print(
             "Checkout Request ID:",
-            checkout_request_id
+            checkout_request_id,
         )
 
 
-        # =================================================
-        # FIND TRANSACTION
-        # =================================================
-
-        transaction = (
-            Transaction.query
-            .filter_by(
-                reference=
-                    checkout_request_id
-            )
-            .first()
-        )
+        # -------------------------------------------------
+        # UNKNOWN TRANSACTION
+        # -------------------------------------------------
 
         if not transaction:
 
             print(
                 "No matching transaction found:",
-                checkout_request_id
+                checkout_request_id,
             )
 
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc":
-                    "Accepted"
+                "ResultDesc": "Accepted",
             })
 
 
-        # =================================================
-        # PREVENT DOUBLE CREDIT
-        # =================================================
+        # -------------------------------------------------
+        # IDEMPOTENCY
+        # -------------------------------------------------
 
         if transaction.status == "completed":
 
             print(
                 "Transaction already completed:",
-                transaction.id
+                transaction.id,
             )
 
             return jsonify({
                 "ResultCode": 0,
                 "ResultDesc":
-                    "Already processed"
+                    "Already processed",
             })
 
 
-        # =================================================
-        # VERIFY PAYMENT AMOUNT
-        # =================================================
+        # -------------------------------------------------
+        # VERIFY AMOUNT
+        # -------------------------------------------------
 
         try:
 
@@ -522,14 +592,30 @@ def mpesa_callback():
 
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc":
-                    "Accepted"
+                "ResultDesc": "Accepted",
             })
 
 
-        if callback_amount != float(
-            transaction.amount
-        ):
+        try:
+
+            transaction_amount = float(
+                transaction.amount
+            )
+
+        except (TypeError, ValueError):
+
+            print(
+                "Invalid transaction amount:",
+                transaction.id,
+            )
+
+            return jsonify({
+                "ResultCode": 0,
+                "ResultDesc": "Accepted",
+            })
+
+
+        if callback_amount != transaction_amount:
 
             transaction.status = "failed"
 
@@ -546,52 +632,49 @@ def mpesa_callback():
 
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc":
-                    "Accepted"
+                "ResultDesc": "Accepted",
             })
 
 
-        # =================================================
+        # -------------------------------------------------
         # FIND USER
-        # =================================================
+        # -------------------------------------------------
 
         user = db.session.get(
             User,
-            transaction.user_id
+            transaction.user_id,
         )
 
         if not user:
 
             print(
                 "User not found:",
-                transaction.user_id
+                transaction.user_id,
             )
 
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc":
-                    "Accepted"
+                "ResultDesc": "Accepted",
             })
 
 
-        # =================================================
+        # -------------------------------------------------
         # CREDIT USER BALANCE
-        # =================================================
+        # -------------------------------------------------
+
+        current_balance = float(
+            user.balance or 0
+        )
 
         user.balance = (
-            float(
-                user.balance or 0
-            )
-            +
-            float(
-                transaction.amount
-            )
+            current_balance
+            + transaction_amount
         )
 
 
-        # =================================================
-        # MARK TRANSACTION COMPLETED
-        # =================================================
+        # -------------------------------------------------
+        # COMPLETE TRANSACTION
+        # -------------------------------------------------
 
         transaction.status = "completed"
 
@@ -600,35 +683,31 @@ def mpesa_callback():
             f"Receipt: {receipt}"
         )
 
+
         db.session.commit()
+
 
         print(
             "Balance successfully credited."
         )
 
-
-    # =====================================================
-    # FAILED / CANCELLED PAYMENT
-    # =====================================================
-
     else:
+
+        # -------------------------------------------------
+        # PAYMENT FAILED / CANCELLED
+        # -----------------------------------------------------
 
         print(
             "M-PESA payment failed:",
             result_code,
-            result_desc
+            result_desc,
         )
 
-        transaction = (
-            Transaction.query
-            .filter_by(
-                reference=
-                    checkout_request_id
-            )
-            .first()
-        )
 
         if transaction:
+
+            # Never change a successful transaction
+            # back to failed.
 
             if transaction.status != "completed":
 
@@ -642,14 +721,13 @@ def mpesa_callback():
                 db.session.commit()
 
 
-    # =====================================================
+    # -----------------------------------------------------
     # ACKNOWLEDGE CALLBACK
-    # =====================================================
+    # -----------------------------------------------------
 
     return jsonify({
         "ResultCode": 0,
-        "ResultDesc":
-            "Accepted"
+        "ResultDesc": "Accepted",
     })
 
 
@@ -658,13 +736,8 @@ def mpesa_callback():
 # =========================================================
 
 def query_stk_status(
-    checkout_request_id
+    checkout_request_id,
 ):
-
-    if not checkout_request_id:
-        raise ValueError(
-            "Checkout Request ID is required."
-        )
 
     shortcode = os.getenv(
         "MPESA_SHORTCODE"
@@ -673,6 +746,12 @@ def query_stk_status(
     if not shortcode:
         raise RuntimeError(
             "MPESA_SHORTCODE is not configured."
+        )
+
+    if not checkout_request_id:
+
+        raise ValueError(
+            "Checkout request ID is required."
         )
 
     timestamp = datetime.now().strftime(
@@ -691,7 +770,6 @@ def query_stk_status(
     )
 
     payload = {
-
         "BusinessShortCode":
             shortcode,
 
@@ -702,7 +780,7 @@ def query_stk_status(
             timestamp,
 
         "CheckoutRequestID":
-            checkout_request_id
+            checkout_request_id,
     }
 
     response = requests.post(
@@ -713,9 +791,9 @@ def query_stk_status(
                 f"Bearer {access_token}",
 
             "Content-Type":
-                "application/json"
+                "application/json",
         },
-        timeout=30
+        timeout=30,
     )
 
     response.raise_for_status()
@@ -729,10 +807,10 @@ def query_stk_status(
 
 @mpesa_bp.route(
     "/status/<checkout_request_id>",
-    methods=["GET"]
+    methods=["GET"],
 )
 def payment_status(
-    checkout_request_id
+    checkout_request_id,
 ):
 
     try:
@@ -743,20 +821,18 @@ def payment_status(
 
         return jsonify({
             "success": True,
-            "data": result
+            "data": result,
         })
 
-    except Exception as error:
+    except Exception as exc:
 
         print(
             "M-PESA STATUS ERROR:",
-            repr(error)
+            repr(exc),
         )
 
         return jsonify({
             "success": False,
             "message":
                 "Unable to query M-PESA payment status.",
-            "error":
-                str(error)
         }), 500
