@@ -1,115 +1,545 @@
 {% extends "base.html" %}
 
 {% block title %}
-Dashboard
+Dashboard - Real Investment Platform
 {% endblock %}
 
 {% block content %}
 
-<h2>My Dashboard</h2>
+<style>
 
-<div class="grid">
+    .dashboard {
+        max-width: 1200px;
+        margin: auto;
+    }
 
-    <div class="card">
+    /* Welcome section */
+    .welcome {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+        color: white;
+        padding: 28px;
+        border-radius: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, .25);
+    }
 
-        <h3>Available Balance</h3>
+    .welcome h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+    }
 
-        <div class="amount">
+    .welcome p {
+        margin: 0;
+        opacity: .9;
+    }
+
+    /* Balance card */
+    .balance-card {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        padding: 28px;
+        border-radius: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, .25);
+    }
+
+    .balance-title {
+        font-size: 15px;
+        opacity: .9;
+        margin-bottom: 8px;
+    }
+
+    .balance {
+        font-size: 38px;
+        font-weight: 800;
+        margin-bottom: 20px;
+    }
+
+    .balance-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .balance-buttons a {
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+    .deposit-btn {
+        background: white;
+        color: #059669;
+    }
+
+    .invest-btn {
+        background: rgba(255,255,255,.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,.4);
+    }
+
+    /* Statistics */
+    .stats {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 22px;
+        border-radius: 18px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.07);
+        border-left: 5px solid;
+    }
+
+    .stat-card.blue {
+        border-color: #3b82f6;
+    }
+
+    .stat-card.purple {
+        border-color: #8b5cf6;
+    }
+
+    .stat-card.orange {
+        border-color: #f97316;
+    }
+
+    .stat-card.pink {
+        border-color: #ec4899;
+    }
+
+    .stat-icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .stat-title {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .stat-value {
+        font-size: 23px;
+        font-weight: 800;
+        margin-top: 5px;
+    }
+
+    /* Actions */
+    .section-title {
+        margin: 25px 0 14px;
+        font-size: 21px;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .action {
+        text-decoration: none;
+        color: #172033;
+        background: white;
+        padding: 22px;
+        border-radius: 18px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.07);
+        transition: .2s;
+    }
+
+    .action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,.12);
+    }
+
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+        margin-bottom: 13px;
+    }
+
+    .icon-deposit {
+        background: #dcfce7;
+    }
+
+    .icon-invest {
+        background: #ede9fe;
+    }
+
+    .icon-transactions {
+        background: #dbeafe;
+    }
+
+    .icon-withdraw {
+        background: #ffedd5;
+    }
+
+    .action h3 {
+        margin: 0 0 5px;
+    }
+
+    .action p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    /* Transactions */
+    .transactions {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.07);
+        overflow-x: auto;
+    }
+
+    .transactions table {
+        min-width: 600px;
+    }
+
+    .transactions th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .status {
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 35px;
+        color: #6b7280;
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+
+        .welcome h1 {
+            font-size: 23px;
+        }
+
+        .welcome {
+            padding: 22px;
+        }
+
+        .balance {
+            font-size: 32px;
+        }
+
+        .stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .stat-card {
+            padding: 16px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+        }
+
+        .actions {
+            grid-template-columns: 1fr 1fr;
+        }
+
+    }
+
+</style>
+
+
+<div class="dashboard">
+
+    <!-- WELCOME -->
+    <div class="welcome">
+
+        <h1>
+            👋 Welcome back!
+        </h1>
+
+        <p>
+            Manage your account, deposits and investments
+            from your dashboard.
+        </p>
+
+    </div>
+
+
+    <!-- BALANCE -->
+    <div class="balance-card">
+
+        <div class="balance-title">
+            Available Balance
+        </div>
+
+        <div class="balance">
             KSh {{ balance|default(0) }}
         </div>
 
-    </div>
+        <div class="balance-buttons">
 
-    <div class="card">
+            <a href="/deposit"
+               class="deposit-btn">
+                💰 Deposit
+            </a>
 
-        <h3>Total Deposits</h3>
+            <a href="/invest"
+               class="invest-btn">
+                📈 Invest
+            </a>
 
-        <div class="amount">
-            KSh {{ total_deposits|default(0) }}
         </div>
 
     </div>
 
-    <div class="card">
 
-        <h3>Investment Balance</h3>
+    <!-- STATISTICS -->
+    <div class="stats">
 
-        <div class="amount">
-            KSh {{ investment_balance|default(0) }}
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+                💵
+            </div>
+
+            <div class="stat-title">
+                Total Deposits
+            </div>
+
+            <div class="stat-value">
+                KSh {{ total_deposits|default(0) }}
+            </div>
+
         </div>
+
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+                📊
+            </div>
+
+            <div class="stat-title">
+                Investment Balance
+            </div>
+
+            <div class="stat-value">
+                KSh {{ investment_balance|default(0) }}
+            </div>
+
+        </div>
+
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+                🔄
+            </div>
+
+            <div class="stat-title">
+                Transactions
+            </div>
+
+            <div class="stat-value">
+                {{ transactions|length if transactions else 0 }}
+            </div>
+
+        </div>
+
+
+        <div class="stat-card pink">
+
+            <div class="stat-icon">
+                🛡️
+            </div>
+
+            <div class="stat-title">
+                Account Status
+            </div>
+
+            <div class="stat-value">
+                Active
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- QUICK ACTIONS -->
+    <h2 class="section-title">
+        Quick Actions
+    </h2>
+
+    <div class="actions">
+
+        <a href="/deposit"
+           class="action">
+
+            <div class="action-icon icon-deposit">
+                💰
+            </div>
+
+            <h3>Deposit</h3>
+
+            <p>
+                Add money to your account
+            </p>
+
+        </a>
+
+
+        <a href="/invest"
+           class="action">
+
+            <div class="action-icon icon-invest">
+                📈
+            </div>
+
+            <h3>Invest</h3>
+
+            <p>
+                View investment opportunities
+            </p>
+
+        </a>
+
+
+        <a href="/transactions"
+           class="action">
+
+            <div class="action-icon icon-transactions">
+                📋
+            </div>
+
+            <h3>Transactions</h3>
+
+            <p>
+                View your transaction history
+            </p>
+
+        </a>
+
+
+        <a href="/withdraw"
+           class="action">
+
+            <div class="action-icon icon-withdraw">
+                💸
+            </div>
+
+            <h3>Withdraw</h3>
+
+            <p>
+                Request a withdrawal
+            </p>
+
+        </a>
+
+    </div>
+
+
+    <!-- RECENT TRANSACTIONS -->
+    <h2 class="section-title">
+        Recent Transactions
+    </h2>
+
+    <div class="transactions">
+
+        {% if transactions %}
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for transaction in transactions %}
+
+                <tr>
+
+                    <td>
+                        {{ transaction.created_at }}
+                    </td>
+
+                    <td>
+                        {{ transaction.type }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            KSh {{ transaction.amount }}
+                        </strong>
+                    </td>
+
+                    <td>
+
+                        <span class="status">
+                            {{ transaction.status }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <div class="empty">
+
+            <div style="font-size:45px;">
+                📭
+            </div>
+
+            <h3>
+                No transactions yet
+            </h3>
+
+            <p>
+                Your deposits and other account
+                activities will appear here.
+            </p>
+
+            <a href="/deposit"
+               class="btn">
+                Make Your First Deposit
+            </a>
+
+        </div>
+
+        {% endif %}
 
     </div>
 
 </div>
 
-<div class="card">
-
-    <h3>Account Actions</h3>
-
-    <a class="btn"
-       href="/deposit">
-        Deposit Funds
-    </a>
-
-    <a class="btn"
-       href="/transactions">
-        Transactions
-    </a>
-
-    <a class="btn"
-       href="/invest">
-        Investment Plans
-    </a>
-
-</div>
-
-<div class="card">
-
-    <h3>Recent Transactions</h3>
-
-    {% if transactions %}
-
-    <table>
-
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Status</th>
-        </tr>
-
-        {% for transaction in transactions %}
-
-        <tr>
-
-            <td>
-                {{ transaction.created_at }}
-            </td>
-
-            <td>
-                {{ transaction.type }}
-            </td>
-
-            <td>
-                KSh {{ transaction.amount }}
-            </td>
-
-            <td>
-                {{ transaction.status }}
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </table>
-
-    {% else %}
-
-    <p>No transactions yet.</p>
-
-    {% endif %}
-
-</div>
-
-{% endblock %} 
+{% endblock %}
