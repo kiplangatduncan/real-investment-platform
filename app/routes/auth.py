@@ -12,16 +12,34 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
+        # Temporary login diagnostics
+        print("========== LOGIN ATTEMPT ==========")
+        print("LOGIN USERNAME:", username)
+        print("PASSWORD RECEIVED:", bool(password))
+
         if not username or not password:
+            print("LOGIN RESULT: Username or password missing")
             flash("Please enter your username and password.", "error")
             return redirect(url_for("auth.login"))
 
         user = User.query.filter_by(username=username).first()
 
-        if user and user.check_password(password):
+        print("USER FOUND:", user is not None)
+
+        if user:
+            password_match = user.check_password(password)
+            print("PASSWORD MATCH:", password_match)
+        else:
+            password_match = False
+
+        if user and password_match:
+            print("LOGIN RESULT: SUCCESS")
             login_user(user)
             flash("Login successful!", "success")
             return redirect(url_for("main.dashboard"))
+
+        print("LOGIN RESULT: INVALID USERNAME OR PASSWORD")
+        print("===================================")
 
         flash("Invalid username or password.", "error")
 
