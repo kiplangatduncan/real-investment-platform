@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -165,10 +166,19 @@
             border-radius: 10px;
         }
 
+        .balance-label {
+            color: #666;
+            font-size: 14px;
+        }
+
         .balance-amount {
             font-size: 28px;
             font-weight: bold;
             margin-top: 5px;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         @media (max-width: 600px) {
@@ -184,10 +194,18 @@
     </style>
 </head>
 
+
 <body>
 
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
+
     <nav class="navbar">
-        <a href="/">Home</a>
+
+        <a href="/">
+            Home
+        </a>
 
         <a href="/dashboard">
             Dashboard
@@ -208,23 +226,34 @@
         <a href="/logout">
             Logout
         </a>
+
     </nav>
 
+
+    <!-- =====================================================
+         MAIN CONTAINER
+    ====================================================== -->
 
     <div class="container">
 
         <div class="card">
 
-            <h1>Deposit Funds</h1>
+            <h1>
+                Deposit Funds
+            </h1>
 
             <p class="subtitle">
                 Add funds to your investment account
             </p>
 
 
+            <!-- =================================================
+                 CURRENT BALANCE
+            ================================================== -->
+
             <div class="balance-box">
 
-                <div>
+                <div class="balance-label">
                     Current Account Balance
                 </div>
 
@@ -239,10 +268,16 @@
             </div>
 
 
+            <!-- =================================================
+                 DEPOSIT FORM
+            ================================================== -->
+
             <form
                 id="depositForm"
                 onsubmit="submitDeposit(event)"
             >
+
+                <!-- Currency -->
 
                 <label for="currency">
                     Currency
@@ -294,14 +329,18 @@
                 </select>
 
 
+                <!-- Currency Information -->
+
                 <div
                     class="currency-info"
                     id="currencyInfo"
                 >
-                    KES deposits can currently be made
-                    using M-PESA.
+                    KES deposits can currently be
+                    made using M-PESA.
                 </div>
 
+
+                <!-- Amount -->
 
                 <label for="amount">
                     Amount
@@ -311,12 +350,14 @@
                     type="number"
                     id="amount"
                     name="amount"
-                    min="1"
-                    step="0.01"
+                    min="10"
+                    step="1"
                     placeholder="Enter amount"
                     required
                 >
 
+
+                <!-- M-PESA section -->
 
                 <div id="phoneSection">
 
@@ -346,6 +387,8 @@
                 </div>
 
 
+                <!-- Submit button -->
+
                 <button
                     type="submit"
                     id="depositButton"
@@ -355,6 +398,10 @@
 
             </form>
 
+
+            <!-- =================================================
+                 MESSAGE
+            ================================================== -->
 
             <div
                 id="message"
@@ -366,7 +413,50 @@
     </div>
 
 
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
     <script>
+
+        function showMessage(
+            type,
+            text
+        ) {
+
+            const message =
+                document.getElementById(
+                    "message"
+                );
+
+            message.className =
+                "message " + type;
+
+            message.style.display =
+                "block";
+
+            message.textContent =
+                text;
+        }
+
+
+        function hideMessage() {
+
+            const message =
+                document.getElementById(
+                    "message"
+                );
+
+            message.className =
+                "message";
+
+            message.style.display =
+                "none";
+
+            message.textContent =
+                "";
+        }
+
 
         function currencyChanged() {
 
@@ -385,10 +475,18 @@
                     "phoneSection"
                 );
 
+            const phone =
+                document.getElementById(
+                    "phone"
+                );
+
             const button =
                 document.getElementById(
                     "depositButton"
                 );
+
+
+            hideMessage();
 
 
             if (currency === "KES") {
@@ -396,15 +494,20 @@
                 info.className =
                     "currency-info";
 
+                info.style.display =
+                    "block";
+
                 info.textContent =
                     "KES deposits can currently be " +
                     "made using M-PESA.";
 
-                phoneSection.style.display =
-                    "block";
+                phoneSection.classList.remove(
+                    "hidden"
+                );
 
-                button.style.display =
-                    "block";
+                phone.required = true;
+
+                button.disabled = false;
 
                 button.textContent =
                     "Deposit with M-PESA";
@@ -424,14 +527,16 @@
                     "are currently available only " +
                     "for KES.";
 
-                phoneSection.style.display =
-                    "none";
+                phoneSection.classList.add(
+                    "hidden"
+                );
 
-                button.style.display =
-                    "block";
+                phone.required = false;
+
+                button.disabled = true;
 
                 button.textContent =
-                    "Payment method unavailable";
+                    "M-PESA unavailable";
             }
         }
 
@@ -439,6 +544,8 @@
         async function submitDeposit(event) {
 
             event.preventDefault();
+
+            hideMessage();
 
 
             const currency =
@@ -454,74 +561,85 @@
             const phone =
                 document.getElementById(
                     "phone"
-                ).value;
+                ).value.trim();
 
             const button =
                 document.getElementById(
                     "depositButton"
                 );
 
-            const message =
-                document.getElementById(
-                    "message"
-                );
 
-
-            message.className =
-                "message";
-
-            message.style.display =
-                "none";
-
-            message.textContent =
-                "";
-
+            // -----------------------------------------------
+            // Currency
+            // -----------------------------------------------
 
             if (currency !== "KES") {
 
-                message.className =
-                    "message warning";
-
-                message.style.display =
-                    "block";
-
-                message.textContent =
+                showMessage(
+                    "warning",
                     "M-PESA deposits are currently " +
-                    "available only in KES.";
+                    "available only in KES."
+                );
 
                 return;
             }
 
 
-            if (!amount || Number(amount) <= 0) {
+            // -----------------------------------------------
+            // Amount
+            // -----------------------------------------------
 
-                message.className =
-                    "message error";
+            if (
+                !amount ||
+                Number(amount) < 10
+            ) {
 
-                message.style.display =
-                    "block";
-
-                message.textContent =
-                    "Please enter a valid amount.";
+                showMessage(
+                    "error",
+                    "Minimum deposit is 10 KES."
+                );
 
                 return;
             }
 
+
+            // -----------------------------------------------
+            // Whole-number amount
+            // -----------------------------------------------
+
+            if (
+                !Number.isInteger(
+                    Number(amount)
+                )
+            ) {
+
+                showMessage(
+                    "error",
+                    "Please enter a whole KES amount."
+                );
+
+                return;
+            }
+
+
+            // -----------------------------------------------
+            // Phone
+            // -----------------------------------------------
 
             if (!phone) {
 
-                message.className =
-                    "message error";
-
-                message.style.display =
-                    "block";
-
-                message.textContent =
-                    "Please enter your M-PESA phone number.";
+                showMessage(
+                    "error",
+                    "Please enter your M-PESA phone number."
+                );
 
                 return;
             }
 
+
+            // -----------------------------------------------
+            // Disable button
+            // -----------------------------------------------
 
             button.disabled = true;
 
@@ -539,34 +657,59 @@
 
                             headers: {
                                 "Content-Type":
+                                    "application/json",
+
+                                "Accept":
                                     "application/json"
                             },
 
-                            body: JSON.stringify({
-                                amount: amount,
-                                phone: phone,
-                                currency: currency
-                            })
+                            body:
+                                JSON.stringify({
+                                    amount:
+                                        amount,
+
+                                    phone:
+                                        phone,
+
+                                    currency:
+                                        currency
+                                })
                         }
                     );
 
 
-                const data =
-                    await response.json();
+                let data;
+
+                try {
+
+                    data =
+                        await response.json();
+
+                } catch (jsonError) {
+
+                    data = {
+                        success: false,
+                        message:
+                            "The server returned an invalid response."
+                    };
+                }
 
 
-                if (data.success) {
+                // -------------------------------------------
+                // Successful STK request
+                // -------------------------------------------
 
-                    message.className =
-                        "message success";
+                if (
+                    response.ok &&
+                    data.success
+                ) {
 
-                    message.style.display =
-                        "block";
-
-                    message.textContent =
+                    showMessage(
+                        "success",
                         data.message ||
                         "M-PESA request sent. " +
-                        "Check your phone.";
+                        "Check your phone and enter your PIN."
+                    );
 
                     document
                         .getElementById(
@@ -574,41 +717,50 @@
                         )
                         .value = "";
 
+                    document
+                        .getElementById(
+                            "phone"
+                        )
+                        .value = "";
+
                 } else {
 
-                    message.className =
-                        "message error";
-
-                    message.style.display =
-                        "block";
-
-                    message.textContent =
+                    showMessage(
+                        "error",
                         data.message ||
-                        "Unable to process the payment.";
+                        "Unable to process the M-PESA payment."
+                    );
                 }
 
 
             } catch (error) {
 
-                message.className =
-                    "message error";
+                console.error(
+                    "Deposit error:",
+                    error
+                );
 
-                message.style.display =
-                    "block";
+                showMessage(
+                    "error",
+                    "Unable to connect to the payment server. " +
+                    "Please try again."
+                );
 
-                message.textContent =
-                    "Unable to connect to the " +
-                    "payment server.";
+            } finally {
+
+                button.disabled = false;
+
+                button.textContent =
+                    "Deposit with M-PESA";
             }
-
-
-            button.disabled = false;
-
-            button.textContent =
-                "Deposit with M-PESA";
         }
+
+
+        // Run once when page loads
+        currencyChanged();
 
     </script>
 
 </body>
+
 </html>
