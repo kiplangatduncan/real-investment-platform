@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.extensions import db
+
+from app import db
 from app.models import Transaction
+
 
 payments = Blueprint("payments", __name__)
 
@@ -12,26 +14,27 @@ def deposit():
     if request.method == "POST":
         try:
             amount = float(request.form.get("amount", 0))
-        except ValueError:
+        except (ValueError, TypeError):
             amount = 0
 
         if amount <= 0:
             flash("Enter a valid amount.")
             return redirect(url_for("payments.deposit"))
 
-        current_user.balance += amount
+        # IMPORTANT:
+        # Do NOT add money to the user's balance here.
+        #
+        # The balance must only be updated after M-PESA
+        # has confirmed that the payment was successfully received.
+        #
+        # M-PESA confirmation/callback handling should be
+        # responsible for crediting the user's balance.
 
-        transaction = Transaction(
-            user_id=current_user.id,
-            transaction_type="Deposit",
-            amount=amount,
-            description="Account deposit"
+        flash(
+            "Payment request received. "
+            "Your balance will be updated after M-PESA confirms the payment."
         )
 
-        db.session.add(transaction)
-        db.session.commit()
-
-        flash("Deposit recorded successfully.")
         return redirect(url_for("main.dashboard"))
 
     return render_template("deposit.html")
