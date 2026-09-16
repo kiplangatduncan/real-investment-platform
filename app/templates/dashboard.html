@@ -1,545 +1,609 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %}
-Dashboard - Real Investment Platform
-{% endblock %}
+<head>
 
-{% block content %}
+    <meta charset="UTF-8">
 
-<style>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    .dashboard {
-        max-width: 1200px;
-        margin: auto;
-    }
+    <title>Dashboard</title>
 
-    /* Welcome section */
-    .welcome {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
-        color: white;
-        padding: 28px;
-        border-radius: 22px;
-        margin-bottom: 22px;
-        box-shadow: 0 10px 30px rgba(79, 70, 229, .25);
-    }
 
-    .welcome h1 {
-        margin: 0 0 8px;
-        font-size: 28px;
-    }
+    <style>
 
-    .welcome p {
-        margin: 0;
-        opacity: .9;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    /* Balance card */
-    .balance-card {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: white;
-        padding: 28px;
-        border-radius: 22px;
-        margin-bottom: 22px;
-        box-shadow: 0 10px 30px rgba(16, 185, 129, .25);
-    }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #222;
+        }
 
-    .balance-title {
-        font-size: 15px;
-        opacity: .9;
-        margin-bottom: 8px;
-    }
+        .navbar {
+            background: #111827;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-    .balance {
-        font-size: 38px;
-        font-weight: 800;
-        margin-bottom: 20px;
-    }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
 
-    .balance-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
 
-    .balance-buttons a {
-        text-decoration: none;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: bold;
-    }
-
-    .deposit-btn {
-        background: white;
-        color: #059669;
-    }
-
-    .invest-btn {
-        background: rgba(255,255,255,.2);
-        color: white;
-        border: 1px solid rgba(255,255,255,.4);
-    }
-
-    /* Statistics */
-    .stats {
-        display: grid;
-        grid-template-columns:
-            repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 22px;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 22px;
-        border-radius: 18px;
-        box-shadow: 0 5px 20px rgba(0,0,0,.07);
-        border-left: 5px solid;
-    }
-
-    .stat-card.blue {
-        border-color: #3b82f6;
-    }
-
-    .stat-card.purple {
-        border-color: #8b5cf6;
-    }
-
-    .stat-card.orange {
-        border-color: #f97316;
-    }
-
-    .stat-card.pink {
-        border-color: #ec4899;
-    }
-
-    .stat-icon {
-        font-size: 28px;
-        margin-bottom: 10px;
-    }
-
-    .stat-title {
-        color: #6b7280;
-        font-size: 14px;
-    }
-
-    .stat-value {
-        font-size: 23px;
-        font-weight: 800;
-        margin-top: 5px;
-    }
-
-    /* Actions */
-    .section-title {
-        margin: 25px 0 14px;
-        font-size: 21px;
-    }
-
-    .actions {
-        display: grid;
-        grid-template-columns:
-            repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-    }
-
-    .action {
-        text-decoration: none;
-        color: #172033;
-        background: white;
-        padding: 22px;
-        border-radius: 18px;
-        box-shadow: 0 5px 20px rgba(0,0,0,.07);
-        transition: .2s;
-    }
-
-    .action:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,.12);
-    }
-
-    .action-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 25px;
-        margin-bottom: 13px;
-    }
-
-    .icon-deposit {
-        background: #dcfce7;
-    }
-
-    .icon-invest {
-        background: #ede9fe;
-    }
-
-    .icon-transactions {
-        background: #dbeafe;
-    }
-
-    .icon-withdraw {
-        background: #ffedd5;
-    }
-
-    .action h3 {
-        margin: 0 0 5px;
-    }
-
-    .action p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 13px;
-    }
-
-    /* Transactions */
-    .transactions {
-        background: white;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 5px 20px rgba(0,0,0,.07);
-        overflow-x: auto;
-    }
-
-    .transactions table {
-        min-width: 600px;
-    }
-
-    .transactions th {
-        background: #f8fafc;
-        color: #64748b;
-        font-size: 13px;
-    }
-
-    .status {
-        padding: 6px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    .empty {
-        text-align: center;
-        padding: 35px;
-        color: #6b7280;
-    }
-
-    /* Mobile */
-    @media (max-width: 600px) {
-
-        .welcome h1 {
-            font-size: 23px;
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 15px;
         }
 
         .welcome {
-            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            margin-bottom: 5px;
+        }
+
+        .welcome p {
+            color: #666;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 1fr));
+
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+
+            box-shadow:
+                0 4px 15px
+                rgba(0, 0, 0, 0.07);
+        }
+
+        .card-title {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
         }
 
         .balance {
-            font-size: 32px;
+            font-size: 28px;
+            font-weight: bold;
         }
 
-        .stats {
-            grid-template-columns: 1fr 1fr;
+        .wallet-section {
+            margin-top: 30px;
         }
 
-        .stat-card {
-            padding: 16px;
+        .wallet-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+
+            gap: 15px;
+            margin-top: 15px;
         }
 
-        .stat-value {
+        .wallet {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+
+            box-shadow:
+                0 3px 12px
+                rgba(0, 0, 0, 0.06);
+        }
+
+        .currency {
+            font-weight: bold;
             font-size: 18px;
         }
 
-        .actions {
-            grid-template-columns: 1fr 1fr;
+        .currency-name {
+            color: #777;
+            font-size: 13px;
+            margin-top: 4px;
         }
 
-    }
+        .wallet-balance {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
 
-</style>
+        .actions {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action {
+            display: block;
+            text-align: center;
+
+            background: #2563eb;
+            color: white;
+
+            text-decoration: none;
+
+            padding: 15px;
+            border-radius: 9px;
+
+            font-weight: bold;
+        }
+
+        .action:hover {
+            background: #1d4ed8;
+        }
+
+        .transactions {
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .completed {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #ca8a04;
+            font-weight: bold;
+        }
+
+        .failed {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                padding: 12px;
+            }
+
+            table {
+                font-size: 13px;
+            }
+
+            th,
+            td {
+                padding: 9px;
+            }
+
+        }
+
+    </style>
+
+</head>
 
 
-<div class="dashboard">
-
-    <!-- WELCOME -->
-    <div class="welcome">
-
-        <h1>
-            👋 Welcome back!
-        </h1>
-
-        <p>
-            Manage your account, deposits and investments
-            from your dashboard.
-        </p>
-
-    </div>
+<body>
 
 
-    <!-- BALANCE -->
-    <div class="balance-card">
+    <nav class="navbar">
 
-        <div class="balance-title">
-            Available Balance
+        <a href="/">
+            Home
+        </a>
+
+        <a href="/dashboard">
+            Dashboard
+        </a>
+
+        <a href="/payments/deposit">
+            Deposit
+        </a>
+
+        <a href="/invest">
+            Invest
+        </a>
+
+        <a href="/transactions">
+            Transactions
+        </a>
+
+        <a href="/logout">
+            Logout
+        </a>
+
+    </nav>
+
+
+    <div class="container">
+
+
+        <div class="welcome">
+
+            <h1>
+                Welcome,
+                {{ current_user.username }}
+            </h1>
+
+            <p>
+                Manage your investment account
+                and currencies.
+            </p>
+
         </div>
 
-        <div class="balance">
-            KSh {{ balance|default(0) }}
+
+        <!-- MAIN BALANCE -->
+
+        <div class="cards">
+
+            <div class="card">
+
+                <div class="card-title">
+                    Default Account Balance
+                </div>
+
+                <div class="balance">
+
+                    {{ current_user.currency or "KES" }}
+
+                    {{ "%.2f"|format(
+                        current_user.balance or 0
+                    ) }}
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    Account Currency
+                </div>
+
+                <div class="balance">
+
+                    {{ current_user.currency or "KES" }}
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-title">
+                    Total Transactions
+                </div>
+
+                <div class="balance">
+
+                    {{ current_user.transactions|length }}
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="balance-buttons">
 
-            <a href="/deposit"
-               class="deposit-btn">
-                💰 Deposit
+        <!-- WALLETS -->
+
+        <div class="wallet-section">
+
+            <h2>
+                My Currency Wallets
+            </h2>
+
+            <div class="wallet-grid">
+
+
+                {% if current_user.wallets %}
+
+                    {% for wallet in current_user.wallets %}
+
+                        <div class="wallet">
+
+                            <div class="currency">
+                                {{ wallet.currency }}
+                            </div>
+
+                            <div class="currency-name">
+
+                                {% if wallet.currency == "KES" %}
+                                    Kenyan Shilling
+
+                                {% elif wallet.currency == "USD" %}
+                                    US Dollar
+
+                                {% elif wallet.currency == "GBP" %}
+                                    British Pound
+
+                                {% elif wallet.currency == "EUR" %}
+                                    Euro
+
+                                {% elif wallet.currency == "UGX" %}
+                                    Ugandan Shilling
+
+                                {% elif wallet.currency == "TZS" %}
+                                    Tanzanian Shilling
+
+                                {% elif wallet.currency == "RWF" %}
+                                    Rwandan Franc
+
+                                {% elif wallet.currency == "ZAR" %}
+                                    South African Rand
+
+                                {% elif wallet.currency == "NGN" %}
+                                    Nigerian Naira
+
+                                {% else %}
+                                    Currency
+                                {% endif %}
+
+                            </div>
+
+                            <div class="wallet-balance">
+
+                                {{ "%.2f"|format(
+                                    wallet.balance or 0
+                                ) }}
+
+                                {{ wallet.currency }}
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="wallet">
+
+                        <div class="currency">
+                            KES
+                        </div>
+
+                        <div class="currency-name">
+                            Kenyan Shilling
+                        </div>
+
+                        <div class="wallet-balance">
+                            0.00 KES
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+
+            </div>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+
+        <div class="actions">
+
+            <a
+                class="action"
+                href="/payments/deposit"
+            >
+                Deposit Funds
             </a>
 
-            <a href="/invest"
-               class="invest-btn">
-                📈 Invest
+            <a
+                class="action"
+                href="/invest"
+            >
+                Invest
+            </a>
+
+            <a
+                class="action"
+                href="/transactions"
+            >
+                View Transactions
             </a>
 
         </div>
 
+
+        <!-- TRANSACTIONS -->
+
+        <div class="transactions">
+
+            <h2>
+                Recent Transactions
+            </h2>
+
+
+            {% if current_user.transactions %}
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Currency
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for transaction
+                            in current_user.transactions
+                            |sort(attribute='created_at',
+                            reverse=true)
+                        %}
+
+                            <tr>
+
+                                <td>
+
+                                    {{
+                                        transaction.created_at
+                                        .strftime(
+                                            "%Y-%m-%d %H:%M"
+                                        )
+                                    }}
+
+                                </td>
+
+                                <td>
+
+                                    {{
+                                        transaction
+                                        .transaction_type
+                                        |capitalize
+                                    }}
+
+                                </td>
+
+                                <td>
+
+                                    {{
+                                        "%.2f"|format(
+                                            transaction.amount
+                                        )
+                                    }}
+
+                                </td>
+
+                                <td>
+
+                                    {{
+                                        transaction.currency
+                                        or "KES"
+                                    }}
+
+                                </td>
+
+                                <td>
+
+                                    {% if
+                                        transaction.status
+                                        == "completed"
+                                    %}
+
+                                        <span
+                                            class="completed"
+                                        >
+                                            Completed
+                                        </span>
+
+                                    {% elif
+                                        transaction.status
+                                        == "pending"
+                                    %}
+
+                                        <span
+                                            class="pending"
+                                        >
+                                            Pending
+                                        </span>
+
+                                    {% else %}
+
+                                        <span
+                                            class="failed"
+                                        >
+                                            {{
+                                                transaction.status
+                                                |capitalize
+                                            }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <div class="card">
+
+                    No transactions yet.
+
+                </div>
+
+            {% endif %}
+
+
+        </div>
+
+
     </div>
 
 
-    <!-- STATISTICS -->
-    <div class="stats">
+</body>
 
-        <div class="stat-card blue">
-
-            <div class="stat-icon">
-                💵
-            </div>
-
-            <div class="stat-title">
-                Total Deposits
-            </div>
-
-            <div class="stat-value">
-                KSh {{ total_deposits|default(0) }}
-            </div>
-
-        </div>
-
-
-        <div class="stat-card purple">
-
-            <div class="stat-icon">
-                📊
-            </div>
-
-            <div class="stat-title">
-                Investment Balance
-            </div>
-
-            <div class="stat-value">
-                KSh {{ investment_balance|default(0) }}
-            </div>
-
-        </div>
-
-
-        <div class="stat-card orange">
-
-            <div class="stat-icon">
-                🔄
-            </div>
-
-            <div class="stat-title">
-                Transactions
-            </div>
-
-            <div class="stat-value">
-                {{ transactions|length if transactions else 0 }}
-            </div>
-
-        </div>
-
-
-        <div class="stat-card pink">
-
-            <div class="stat-icon">
-                🛡️
-            </div>
-
-            <div class="stat-title">
-                Account Status
-            </div>
-
-            <div class="stat-value">
-                Active
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- QUICK ACTIONS -->
-    <h2 class="section-title">
-        Quick Actions
-    </h2>
-
-    <div class="actions">
-
-        <a href="/deposit"
-           class="action">
-
-            <div class="action-icon icon-deposit">
-                💰
-            </div>
-
-            <h3>Deposit</h3>
-
-            <p>
-                Add money to your account
-            </p>
-
-        </a>
-
-
-        <a href="/invest"
-           class="action">
-
-            <div class="action-icon icon-invest">
-                📈
-            </div>
-
-            <h3>Invest</h3>
-
-            <p>
-                View investment opportunities
-            </p>
-
-        </a>
-
-
-        <a href="/transactions"
-           class="action">
-
-            <div class="action-icon icon-transactions">
-                📋
-            </div>
-
-            <h3>Transactions</h3>
-
-            <p>
-                View your transaction history
-            </p>
-
-        </a>
-
-
-        <a href="/withdraw"
-           class="action">
-
-            <div class="action-icon icon-withdraw">
-                💸
-            </div>
-
-            <h3>Withdraw</h3>
-
-            <p>
-                Request a withdrawal
-            </p>
-
-        </a>
-
-    </div>
-
-
-    <!-- RECENT TRANSACTIONS -->
-    <h2 class="section-title">
-        Recent Transactions
-    </h2>
-
-    <div class="transactions">
-
-        {% if transactions %}
-
-        <table>
-
-            <thead>
-
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for transaction in transactions %}
-
-                <tr>
-
-                    <td>
-                        {{ transaction.created_at }}
-                    </td>
-
-                    <td>
-                        {{ transaction.type }}
-                    </td>
-
-                    <td>
-                        <strong>
-                            KSh {{ transaction.amount }}
-                        </strong>
-                    </td>
-
-                    <td>
-
-                        <span class="status">
-                            {{ transaction.status }}
-                        </span>
-
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-        {% else %}
-
-        <div class="empty">
-
-            <div style="font-size:45px;">
-                📭
-            </div>
-
-            <h3>
-                No transactions yet
-            </h3>
-
-            <p>
-                Your deposits and other account
-                activities will appear here.
-            </p>
-
-            <a href="/deposit"
-               class="btn">
-                Make Your First Deposit
-            </a>
-
-        </div>
-
-        {% endif %}
-
-    </div>
-
-</div>
-
-{% endblock %}
+</html>
