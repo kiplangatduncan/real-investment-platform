@@ -1,19 +1,137 @@
 {% extends "base.html" %}
+
+{% block title %}
+Investment Plans
+{% endblock %}
+
 {% block content %}
-<h1>Invest</h1>
-<p>Use only investment plans connected to your authorized investment product/partner.</p>
-{% for p in plans %}
-<div class="card">
-<h2>{{ p.name }}</h2>
-<p>{{ p.description }}</p>
-<p><strong>Minimum:</strong> {{ p.minimum_amount }} {{ p.currency }}</p>
-<p><strong>Return:</strong> {{ p.return_description or "Actual performance; not guaranteed." }}</p>
-<form method="post">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<input type="hidden" name="plan_id" value="{{ p.id }}">
-<label>Amount<input type="number" name="amount" min="{{ p.minimum_amount }}" step="0.01" required></label>
-<button class="button">Invest</button>
-</form>
+
+<h2>Investment Opportunities</h2>
+
+<div class="grid">
+
+    <div class="card">
+
+        <h3>Starter Plan</h3>
+
+        <p>
+            Minimum Investment:
+            <strong>KSh 1,000</strong>
+        </p>
+
+        <p>
+            Duration:
+            <strong>30 Days</strong>
+        </p>
+
+        <form method="POST"
+              action="/invest">
+
+            <input
+                type="hidden"
+                name="plan"
+                value="starter"
+            >
+
+            <input
+                type="number"
+                name="amount"
+                min="1000"
+                placeholder="Investment amount"
+                required
+            >
+
+            <button class="btn"
+                    type="submit">
+                Invest
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Growth Plan</h3>
+
+        <p>
+            Minimum Investment:
+            <strong>KSh 100</strong>
+        </p>
+
+        <p>
+            Duration:
+            <strong>60 Days</strong>
+        </p>
+
+        <form method="POST"
+              action="/invest">
+
+            <input
+                type="hidden"
+                name="plan"
+                value="growth"
+            >
+
+            <input
+                type="number"
+                name="amount"
+                min="5000"
+                placeholder="Investment amount"
+                required
+            >
+
+            <button class="btn"
+                    type="submit">
+                Invest
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Premium Plan</h3>
+
+        <p>
+            Minimum Investment:
+            <strong>KSh 10,000</strong>
+        </p>
+
+        <p>
+            Duration:
+            <strong>90 Days</strong>
+        </p>
+
+        <form method="POST"
+              action="/invest">
+
+            <input
+                type="hidden"
+                name="plan"
+                value="premium"
+            >
+
+            <input
+                type="number"
+                name="amount"
+                min="10000"
+                placeholder="Investment amount"
+                required
+            >
+
+            <button class="btn"
+                    type="submit">
+                Invest
+            </button>
+
+        </form>
+
+    </div>
+
 </div>
-{% else %}<p>No investment plans are active.</p>{% endfor %}
+
 {% endblock %}
