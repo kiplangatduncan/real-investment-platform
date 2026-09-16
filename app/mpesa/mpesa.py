@@ -5,25 +5,21 @@ from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 
-from flask import (
-    Blueprint,
-    request,
-    jsonify
-)
-
-from flask_login import (
-    login_required,
-    current_user
-)
+from flask import Blueprint, request, jsonify
+from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models import (
     User,
     Transaction,
     SUPPORTED_CURRENCIES,
-    get_or_create_wallet
+    get_or_create_wallet,
 )
 
+
+# =========================================================
+# M-PESA BLUEPRINT
+# =========================================================
 
 mpesa_bp = Blueprint(
     "mpesa",
@@ -32,9 +28,9 @@ mpesa_bp = Blueprint(
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # M-PESA SETTINGS
-# ---------------------------------------------------------
+# =========================================================
 
 MPESA_ENV = os.getenv(
     "MPESA_ENV",
@@ -68,41 +64,30 @@ MPESA_CALLBACK_URL = os.getenv(
 )
 
 
-# ---------------------------------------------------------
-# PHONE NUMBER
-# ---------------------------------------------------------
+# =========================================================
+# PHONE NUMBER NORMALIZATION
+# =========================================================
 
 def normalize_phone(phone):
     """
-    Converts:
-
-    0712345678
-    0112345678
-    +254712345678
-    254712345678
-
-    into:
+    Convert common Kenyan phone formats to:
 
     254712345678
     """
 
-    phone = str(phone).strip()
+    phone = str(phone or "").strip()
 
-    phone = phone.replace(
-        " ",
-        ""
-    )
+    phone = phone.replace(" ", "")
+    phone = phone.replace("-", "")
 
-    phone = phone.replace(
-        "-",
-        ""
-    )
-
-    if phone.startswith("+"):
+    if phone.startswith("+254"):
         phone = phone[1:]
 
-    if phone.startswith("07") or phone.startswith("01"):
+    elif phone.startswith("07") or phone.startswith("01"):
         phone = "254" + phone[1:]
+
+    elif phone.startswith("7") or phone.startswith("1"):
+        phone = "254" + phone
 
     if not phone.startswith("254"):
         raise ValueError(
@@ -117,9 +102,9 @@ def normalize_phone(phone):
     return phone
 
 
-# ---------------------------------------------------------
-# ACCESS TOKEN
-# ---------------------------------------------------------
+# =========================================================
+# GET M-PESA ACCESS TOKEN
+# =========================================================
 
 def get_access_token():
 
@@ -134,9 +119,9 @@ def get_access_token():
         )
 
     url = (
-        MPESA_BASE_URL +
-        "/oauth/v1/generate"
-        "?grant_type=client_credentials"
+        MPESA_BASE_URL
+        + "/oauth/v1/generate"
+        + "?grant_type=client_credentials"
     )
 
     response = requests.get(
@@ -148,15 +133,24 @@ def get_access_token():
         timeout=30
     )
 
+    try:
+        result = response.json()
+    except ValueError:
+        result = {}
+
     if response.status_code != 200:
+
         raise RuntimeError(
             "M-PESA authorization failed: "
-            + response.text
+            + str(
+                result.get(
+                    "errorMessage",
+                    response.text
+                )
+            )
         )
 
-    data = response.json()
-
-    token = data.get(
+    token = result.get(
         "access_token"
     )
 
@@ -168,9 +162,9 @@ def get_access_token():
     return token
 
 
-# ---------------------------------------------------------
-# PASSWORD / STK TIMESTAMP
-# ---------------------------------------------------------
+# =========================================================
+# GENERATE STK PASSWORD
+# =========================================================
 
 def generate_password(timestamp):
 
@@ -185,19 +179,233 @@ def generate_password(timestamp):
         )
 
     raw = (
-        MPESA_SHORTCODE +
-        MPESA_PASSKEY +
-        timestamp
+        MPESA_SHORTCODE
+        + MPESA_PASSKEY
+        + timestamp
     )
 
-    return base64.b64encode(
+    password = base64.b64encode(
         raw.encode("utf-8")
     ).decode("utf-8")
 
+    return password
 
-# ---------------------------------------------------------
-# STK PUSH
-# ---------------------------------------------------------
+
+# =========================================================
+# INITIATE STK PUSH
+# =========================================================
+
+def initiate_stk_push(
+    phone_number,
+    amount,
+    account_reference,
+    transaction_description
+):
+    """
+    Send an M-PESA STK Push.
+
+    This function is used by:
+
+        app/routes/payments.py
+    """
+
+    # -----------------------------------------------------
+    # Validate configuration
+    # -----------------------------------------------------
+
+    if not MPESA_SHORTCODE:
+        raise ValueError(
+            "MPESA_SHORTCODE is not configured."
+        )
+
+    if not MPESA_CALLBACK_URL:
+        raise ValueError(
+            "MPESA_CALLBACK_URL is not configured."
+        )
+
+    # -----------------------------------------------------
+    # Validate amount
+    # -----------------------------------------------------
+
+    try:
+        amount = float(amount)
+    except (TypeError, ValueError):
+
+        raise ValueError(
+            "Enter a valid deposit amount."
+        )
+
+    if amount <= 0:
+
+        raise ValueError(
+            "Amount must be greater than zero."
+        )
+
+    # M-PESA accepts whole KES amounts
+    amount = int(round(amount))
+
+    # -----------------------------------------------------
+    # Validate phone
+    # -----------------------------------------------------
+
+    phone_number = normalize_phone(
+        phone_number
+    )
+
+    # -----------------------------------------------------
+    # Get access token
+    # -----------------------------------------------------
+
+    token = get_access_token()
+
+    # -----------------------------------------------------
+    # Generate timestamp
+    # -----------------------------------------------------
+
+    timestamp = datetime.now().strftime(
+        "%Y%m%d%H%M%S"
+    )
+
+    password = generate_password(
+        timestamp
+    )
+
+    # -----------------------------------------------------
+    # STK Push URL
+    # -----------------------------------------------------
+
+    url = (
+        MPESA_BASE_URL
+        + "/mpesa/stkpush/v1/processrequest"
+    )
+
+    # -----------------------------------------------------
+    # STK Push payload
+    # -----------------------------------------------------
+
+    payload = {
+        "BusinessShortCode": MPESA_SHORTCODE,
+
+        "Password": password,
+
+        "Timestamp": timestamp,
+
+        "TransactionType":
+            "CustomerPayBillOnline",
+
+        "Amount": amount,
+
+        "PartyA": phone_number,
+
+        "PartyB": MPESA_SHORTCODE,
+
+        "PhoneNumber": phone_number,
+
+        "CallBackURL": MPESA_CALLBACK_URL,
+
+        "AccountReference":
+            str(account_reference)[:12],
+
+        "TransactionDesc":
+            str(transaction_description)[:20],
+    }
+
+    headers = {
+        "Authorization":
+            "Bearer " + token,
+
+        "Content-Type":
+            "application/json",
+    }
+
+    # -----------------------------------------------------
+    # Send request to Safaricom
+    # -----------------------------------------------------
+
+    response = requests.post(
+        url,
+        json=payload,
+        headers=headers,
+        timeout=30
+    )
+
+    # -----------------------------------------------------
+    # Read response
+    # -----------------------------------------------------
+
+    try:
+        result = response.json()
+
+    except ValueError:
+
+        result = {
+            "errorMessage": response.text
+        }
+
+    print(
+        "M-PESA STK RESPONSE:",
+        result
+    )
+
+    # -----------------------------------------------------
+    # HTTP error
+    # -----------------------------------------------------
+
+    if response.status_code != 200:
+
+        raise RuntimeError(
+            result.get(
+                "errorMessage",
+                result.get(
+                    "error",
+                    "M-PESA request failed."
+                )
+            )
+        )
+
+    # -----------------------------------------------------
+    # Safaricom response code
+    # -----------------------------------------------------
+
+    response_code = str(
+        result.get(
+            "ResponseCode",
+            ""
+        )
+    )
+
+    if response_code != "0":
+
+        raise RuntimeError(
+            result.get(
+                "ResponseDescription",
+                result.get(
+                    "errorMessage",
+                    "M-PESA rejected the request."
+                )
+            )
+        )
+
+    # -----------------------------------------------------
+    # Checkout Request ID
+    # -----------------------------------------------------
+
+    checkout_request_id = result.get(
+        "CheckoutRequestID"
+    )
+
+    if not checkout_request_id:
+
+        raise RuntimeError(
+            "M-PESA did not return a CheckoutRequestID."
+        )
+
+    return result
+
+
+# =========================================================
+# DIRECT STK PUSH API
+# =========================================================
 
 @mpesa_bp.route(
     "/stk-push",
@@ -208,9 +416,16 @@ def stk_push():
 
     try:
 
-        data = request.get_json(
-            silent=True
-        ) or request.form
+        # -------------------------------------------------
+        # Accept JSON or normal form data
+        # -------------------------------------------------
+
+        data = (
+            request.get_json(
+                silent=True
+            )
+            or request.form
+        )
 
         amount = data.get(
             "amount"
@@ -223,237 +438,169 @@ def stk_push():
         currency = data.get(
             "currency",
             "KES"
+        )
+
+        currency = str(
+            currency
         ).upper()
 
-        # ---------------------------------------------
+        # -------------------------------------------------
         # Currency validation
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         if currency not in SUPPORTED_CURRENCIES:
+
             return jsonify({
                 "success": False,
                 "message": "Unsupported currency."
             }), 400
 
-        # ---------------------------------------------
-        # M-PESA only works with KES
-        # ---------------------------------------------
+        # -------------------------------------------------
+        # M-PESA only accepts KES
+        # -------------------------------------------------
 
         if currency != "KES":
+
             return jsonify({
                 "success": False,
-                "message": (
+                "message":
                     "M-PESA payments are currently "
                     "available only in KES."
-                )
             }), 400
 
-        # ---------------------------------------------
+        # -------------------------------------------------
         # Amount validation
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         try:
             amount = float(amount)
+
         except (TypeError, ValueError):
+
             return jsonify({
                 "success": False,
-                "message": "Enter a valid amount."
+                "message":
+                    "Enter a valid amount."
             }), 400
 
         if amount <= 0:
+
             return jsonify({
                 "success": False,
-                "message": (
+                "message":
                     "Amount must be greater than zero."
-                )
             }), 400
 
-        # M-PESA amount should be a whole number
-        amount = int(round(amount))
+        amount = int(
+            round(amount)
+        )
 
-        # ---------------------------------------------
+        # -------------------------------------------------
         # Phone validation
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         try:
-            phone = normalize_phone(phone)
+
+            phone = normalize_phone(
+                phone
+            )
+
         except ValueError as exc:
+
             return jsonify({
                 "success": False,
                 "message": str(exc)
             }), 400
 
-        # ---------------------------------------------
-        # Check settings
-        # ---------------------------------------------
-
-        if not MPESA_CALLBACK_URL:
-            return jsonify({
-                "success": False,
-                "message": (
-                    "MPESA_CALLBACK_URL is not configured."
-                )
-            }), 500
-
-        if not MPESA_SHORTCODE:
-            return jsonify({
-                "success": False,
-                "message": (
-                    "MPESA_SHORTCODE is not configured."
-                )
-            }), 500
-
-        # ---------------------------------------------
-        # Get access token
-        # ---------------------------------------------
-
-        token = get_access_token()
-
-        # ---------------------------------------------
-        # Timestamp
-        # ---------------------------------------------
-
-        timestamp = datetime.now().strftime(
-            "%Y%m%d%H%M%S"
-        )
-
-        password = generate_password(
-            timestamp
-        )
-
-        # ---------------------------------------------
-        # STK request
-        # ---------------------------------------------
-
-        url = (
-            MPESA_BASE_URL +
-            "/mpesa/stkpush/v1/processrequest"
-        )
-
-        payload = {
-            "BusinessShortCode": MPESA_SHORTCODE,
-            "Password": password,
-            "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
-            "Amount": amount,
-            "PartyA": phone,
-            "PartyB": MPESA_SHORTCODE,
-            "PhoneNumber": phone,
-            "CallBackURL": MPESA_CALLBACK_URL,
-            "AccountReference": (
-                "INV-" +
-                str(current_user.id)
-            ),
-            "TransactionDesc": (
-                "Investment platform deposit"
-            )
-        }
-
-        headers = {
-            "Authorization": (
-                "Bearer " + token
-            ),
-            "Content-Type": (
-                "application/json"
-            )
-        }
-
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
-
-        # ---------------------------------------------
-        # Safaricom response
-        # ---------------------------------------------
-
-        try:
-            result = response.json()
-        except ValueError:
-            result = {
-                "error": response.text
-            }
-
-        if response.status_code != 200:
-
-            print(
-                "M-PESA HTTP ERROR:",
-                response.status_code,
-                result
-            )
-
-            return jsonify({
-                "success": False,
-                "message": (
-                    result.get(
-                        "errorMessage"
-                    )
-                    or result.get(
-                        "error"
-                    )
-                    or "M-PESA request failed."
-                )
-            }), 400
-
-        response_code = str(
-            result.get(
-                "ResponseCode",
-                ""
-            )
-        )
-
-        if response_code != "0":
-
-            return jsonify({
-                "success": False,
-                "message": (
-                    result.get(
-                        "ResponseDescription"
-                    )
-                    or "M-PESA rejected the request."
-                )
-            }), 400
-
-        # ---------------------------------------------
-        # Save pending transaction
-        # ---------------------------------------------
-
-        checkout_id = result.get(
-            "CheckoutRequestID"
-        )
+        # -------------------------------------------------
+        # Create pending transaction first
+        # -------------------------------------------------
 
         transaction = Transaction(
             user_id=current_user.id,
             transaction_type="deposit",
             amount=amount,
             currency="KES",
-            reference=checkout_id,
             status="pending",
             description="M-PESA deposit"
         )
 
-        db.session.add(transaction)
-
-        # Make sure KES wallet exists
-        get_or_create_wallet(
-            current_user.id,
-            "KES"
+        db.session.add(
+            transaction
         )
+
+        db.session.flush()
+
+        # -------------------------------------------------
+        # Account reference
+        # -------------------------------------------------
+
+        account_reference = (
+            "DEP"
+            + str(transaction.id)
+        )
+
+        # -------------------------------------------------
+        # Send STK Push
+        # -------------------------------------------------
+
+        response = initiate_stk_push(
+            phone_number=phone,
+            amount=amount,
+            account_reference=account_reference,
+            transaction_description=
+                "Investment deposit"
+        )
+
+        checkout_request_id = response.get(
+            "CheckoutRequestID"
+        )
+
+        # -------------------------------------------------
+        # Check CheckoutRequestID
+        # -------------------------------------------------
+
+        if not checkout_request_id:
+
+            transaction.status = "failed"
+
+            transaction.description = (
+                "M-PESA did not return "
+                "CheckoutRequestID."
+            )
+
+            db.session.commit()
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "M-PESA did not return a checkout ID."
+            }), 400
+
+        # -------------------------------------------------
+        # Save checkout ID
+        # -------------------------------------------------
+
+        transaction.reference = (
+            checkout_request_id
+        )
+
+        transaction.status = "pending"
 
         db.session.commit()
 
         return jsonify({
             "success": True,
-            "message": (
+            "message":
                 "M-PESA payment request sent. "
-                "Please check your phone."
-            ),
-            "checkout_request_id": checkout_id
+                "Please check your phone.",
+            "checkout_request_id":
+                checkout_request_id
         })
 
     except requests.exceptions.RequestException as exc:
+
+        db.session.rollback()
 
         print(
             "M-PESA CONNECTION ERROR:",
@@ -462,10 +609,9 @@ def stk_push():
 
         return jsonify({
             "success": False,
-            "message": (
+            "message":
                 "Unable to connect to the "
                 "M-PESA payment server."
-            )
         }), 503
 
     except Exception as exc:
@@ -483,9 +629,9 @@ def stk_push():
         }), 500
 
 
-# ---------------------------------------------------------
+# =========================================================
 # M-PESA CALLBACK
-# ---------------------------------------------------------
+# =========================================================
 
 @mpesa_bp.route(
     "/callback",
@@ -503,6 +649,10 @@ def mpesa_callback():
             "M-PESA CALLBACK:",
             data
         )
+
+        # -------------------------------------------------
+        # Get callback body
+        # -------------------------------------------------
 
         body = data.get(
             "Body",
@@ -531,17 +681,28 @@ def mpesa_callback():
             )
         )
 
+        # -------------------------------------------------
+        # No checkout ID
+        # -------------------------------------------------
+
         if not checkout_request_id:
+
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc": "Accepted"
+                "ResultDesc":
+                    "Accepted"
             })
+
+        # -------------------------------------------------
+        # Find transaction
+        # -------------------------------------------------
 
         transaction = Transaction.query.filter_by(
             reference=checkout_request_id
         ).first()
 
         if not transaction:
+
             print(
                 "Transaction not found:",
                 checkout_request_id
@@ -549,19 +710,25 @@ def mpesa_callback():
 
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc": "Accepted"
+                "ResultDesc":
+                    "Accepted"
             })
 
-        # Prevent double credit
+        # -------------------------------------------------
+        # Prevent duplicate processing
+        # -------------------------------------------------
+
         if transaction.status == "completed":
+
             return jsonify({
                 "ResultCode": 0,
-                "ResultDesc": "Already processed"
+                "ResultDesc":
+                    "Already processed"
             })
 
-        # ---------------------------------------------
+        # -------------------------------------------------
         # Successful payment
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         if str(result_code) == "0":
 
@@ -571,56 +738,74 @@ def mpesa_callback():
                 "M-PESA deposit completed"
             )
 
+            # ---------------------------------------------
+            # Get KES wallet
+            # ---------------------------------------------
+
             wallet = get_or_create_wallet(
                 transaction.user_id,
-                transaction.currency
+                "KES"
             )
+
+            # ---------------------------------------------
+            # Credit wallet
+            # ---------------------------------------------
 
             wallet.balance += (
                 transaction.amount
             )
 
-            # Keep old balance working for existing
-            # parts of the application.
-            if transaction.currency == "KES":
+            # ---------------------------------------------
+            # Keep legacy User.balance updated
+            # ---------------------------------------------
 
-                user = db.session.get(
-                    User,
-                    transaction.user_id
+            user = db.session.get(
+                User,
+                transaction.user_id
+            )
+
+            if user:
+
+                user.balance += (
+                    transaction.amount
                 )
 
-                if user:
-                    user.balance += (
-                        transaction.amount
-                    )
-                    user.currency = "KES"
+                user.currency = "KES"
 
             db.session.commit()
 
             print(
-                "M-PESA payment completed:",
-                checkout_request_id
+                "M-PESA PAYMENT COMPLETED:",
+                checkout_request_id,
+                "Amount:",
+                transaction.amount
             )
+
+        # -------------------------------------------------
+        # Failed / cancelled payment
+        # -------------------------------------------------
 
         else:
 
             transaction.status = "failed"
 
             transaction.description = (
-                "M-PESA failed: " +
-                result_description
+                "M-PESA failed: "
+                + str(result_description)[:200]
             )
 
             db.session.commit()
 
             print(
-                "M-PESA payment failed:",
+                "M-PESA PAYMENT FAILED:",
+                checkout_request_id,
                 result_description
             )
 
         return jsonify({
             "ResultCode": 0,
-            "ResultDesc": "Accepted"
+            "ResultDesc":
+                "Accepted"
         })
 
     except Exception as exc:
@@ -628,19 +813,21 @@ def mpesa_callback():
         db.session.rollback()
 
         print(
-            "CALLBACK ERROR:",
+            "M-PESA CALLBACK ERROR:",
             repr(exc)
         )
 
+        # Always acknowledge the callback
         return jsonify({
             "ResultCode": 0,
-            "ResultDesc": "Accepted"
+            "ResultDesc":
+                "Accepted"
         })
 
 
-# ---------------------------------------------------------
-# SUPPORTED CURRENCIES API
-# ---------------------------------------------------------
+# =========================================================
+# SUPPORTED CURRENCIES
+# =========================================================
 
 @mpesa_bp.route(
     "/currencies",
@@ -650,5 +837,6 @@ def currencies():
 
     return jsonify({
         "success": True,
-        "currencies": SUPPORTED_CURRENCIES
+        "currencies":
+            SUPPORTED_CURRENCIES
     })
