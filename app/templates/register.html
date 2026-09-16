@@ -1,217 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Investment Platform</title>
+{% extends "base.html" %}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+{% block title %}
+Create Account
+{% endblock %}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #222;
-        }
+{% block content %}
 
-        .header {
-            background: #0b1f3a;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
+<div class="card" style="max-width:500px;margin:auto;">
 
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-        }
+    <h2>Create Your Account</h2>
 
-        .container {
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 20px;
-        }
+    <form method="POST"
+          action="/register">
 
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        <label>Full Name</label>
 
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #0b1f3a;
-        }
+        <input
+            type="text"
+            name="name"
+            placeholder="Enter your full name"
+            required
+        >
 
-        label {
-            display: block;
-            margin-top: 15px;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
+        <label>Email Address</label>
 
-        input {
-            width: 100%;
-            padding: 13px;
-            border: 1px solid #ccc;
-            border-radius: 7px;
-            font-size: 16px;
-        }
+        <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            required
+        >
 
-        input:focus {
-            outline: none;
-            border-color: #0b1f3a;
-        }
+        <label>Phone Number</label>
 
-        button {
-            width: 100%;
-            margin-top: 25px;
-            padding: 14px;
-            border: none;
-            border-radius: 7px;
-            background: #0b1f3a;
-            color: white;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        <input
+            type="tel"
+            name="phone"
+            placeholder="07XXXXXXXX"
+            required
+        >
 
-        button:hover {
-            background: #143b69;
-        }
+        <label>Password</label>
 
-        .message {
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 6px;
-            background: #ffe5e5;
-            color: #a00000;
-        }
+        <input
+            type="password"
+            name="password"
+            placeholder="Create password"
+            minlength="6"
+            required
+        >
 
-        .login {
-            text-align: center;
-            margin-top: 20px;
-        }
+        <label>Confirm Password</label>
 
-        .login a {
-            color: #0b1f3a;
-            font-weight: bold;
-            text-decoration: none;
-        }
+        <input
+            type="password"
+            name="confirm_password"
+            placeholder="Confirm password"
+            minlength="6"
+            required
+        >
 
-        @media (max-width: 600px) {
-            .container {
-                margin: 20px auto;
-                padding: 15px;
-            }
+        <button class="btn"
+                type="submit">
+            Create Account
+        </button>
 
-            .card {
-                padding: 22px;
-            }
-        }
-    </style>
-</head>
+    </form>
 
-<body>
+    <p>
+        Already have an account?
+        <a href="/login">Login</a>
+    </p>
 
-    <div class="header">
-        <h1>Investment Platform</h1>
-    </div>
+</div>
 
-    <div class="container">
-
-        <div class="card">
-
-            <h2>Create Account</h2>
-
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="message">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST" action="{{ url_for('register') }}">
-
-                <label for="full_name">Full Name</label>
-                <input
-                    type="text"
-                    id="full_name"
-                    name="full_name"
-                    placeholder="Enter your full name"
-                    required
-                >
-
-                <label for="username">Username</label>
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    placeholder="Choose a username"
-                    required
-                >
-
-                <label for="email">Email</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="example@email.com"
-                    required
-                >
-
-                <label for="phone">Phone Number</label>
-                <input
-                    type="text"
-                    id="phone"
-                    name="phone"
-                    placeholder="+254712345678"
-                    required
-                >
-
-                <label for="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Create a password"
-                    minlength="6"
-                    required
-                >
-
-                <label for="confirm_password">Confirm Password</label>
-                <input
-                    type="password"
-                    id="confirm_password"
-                    name="confirm_password"
-                    placeholder="Enter password again"
-                    minlength="6"
-                    required
-                >
-
-                <button type="submit">
-                    Create Account
-                </button>
-
-            </form>
-
-            <div class="login">
-                Already have an account?
-                <a href="{{ url_for('login') }}">Login</a>
-            </div>
-
-        </div>
-
-    </div>
-
-</body>
-</html>
-<a href="{{ url_for('auth.register') }}">Register</a>
+{% endblock %}
