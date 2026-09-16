@@ -1,0 +1,270 @@
+/* ================================
+   REAL INVESTMENT PLATFORM
+   GLOBAL STYLES
+================================ */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+    line-height: 1.6;
+}
+
+/* NAVIGATION */
+
+.navbar {
+    background: linear-gradient(
+        135deg,
+        #312e81,
+        #6d28d9,
+        #db2777
+    );
+
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.nav-links {
+    display: flex;
+    gap: 18px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* MAIN CONTAINER */
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 16px;
+}
+
+/* CARDS */
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow:
+        0 6px 25px rgba(0, 0, 0, 0.07);
+}
+
+/* BUTTONS */
+
+.btn {
+    display: inline-block;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: linear-gradient(
+        135deg,
+        #4f46e5,
+        #7c3aed
+    );
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    opacity: .92;
+}
+
+/* FORMS */
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 13px;
+    margin-top: 7px;
+    margin-bottom: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    font-size: 15px;
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px
+        rgba(99,102,241,.12);
+}
+
+label {
+    font-weight: 700;
+}
+
+/* DASHBOARD GRID */
+
+.grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+/* STAT CARDS */
+
+.stat-card {
+    background: white;
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow:
+        0 6px 25px rgba(0,0,0,.06);
+}
+
+.stat-value {
+    font-size: 25px;
+    font-weight: 800;
+}
+
+/* TABLES */
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 18px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 13px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+/* STATUS */
+
+.status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #a16207;
+}
+
+.status-failed {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* BALANCE */
+
+.balance-card {
+    background: linear-gradient(
+        135deg,
+        #059669,
+        #10b981
+    );
+
+    color: white;
+    padding: 28px;
+    border-radius: 22px;
+    box-shadow:
+        0 10px 30px rgba(16,185,129,.25);
+}
+
+.balance {
+    font-size: 38px;
+    font-weight: 800;
+}
+
+/* FOOTER */
+
+footer {
+    text-align: center;
+    padding: 30px 15px;
+    color: #6b7280;
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .nav-links {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .nav-links a {
+        white-space: nowrap;
+    }
+
+    .container {
+        padding: 18px 12px;
+    }
+
+    .balance {
+        font-size: 31px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+}
+
+@media (max-width: 420px) {
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+}
