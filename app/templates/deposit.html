@@ -1,14 +1,131 @@
 {% extends "base.html" %}
+
+{% block title %}
+Deposit Funds
+{% endblock %}
+
 {% block content %}
-<h1>Deposit KES</h1>
-<div class="card">
-<p>M-PESA STK will request payment from the phone number you enter.</p>
-<p>Your wallet is credited only after a verified provider callback/reconciliation.</p>
-<form method="post">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<label>M-PESA phone number<input name="phone" placeholder="2547XXXXXXXX" required></label>
-<label>Amount (KES)<input type="number" name="amount" min="10" step="1" required></label>
-<button class="button">Send M-PESA prompt</button>
-</form>
+
+<div class="card"
+     style="max-width:500px;margin:auto;">
+
+    <h2>Deposit Funds</h2>
+
+    <p>
+        Enter the amount you want to deposit
+        and your M-PESA phone number.
+    </p>
+
+    <form id="depositForm">
+
+        <label>Amount (KSh)</label>
+
+        <input
+            type="number"
+            id="amount"
+            name="amount"
+            min="10"
+            step="1"
+            placeholder="Enter amount"
+            required
+        >
+
+        <label>M-PESA Phone Number</label>
+
+        <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="07XXXXXXXX"
+            required
+        >
+
+        <button
+            class="btn"
+            type="submit">
+
+            Deposit with M-PESA
+
+        </button>
+
+    </form>
+
+    <div id="message"
+         style="margin-top:20px;">
+    </div>
+
 </div>
+
+<script>
+
+document
+.getElementById("depositForm")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const amount =
+        document.getElementById("amount").value;
+
+    const phone =
+        document.getElementById("phone").value;
+
+    const message =
+        document.getElementById("message");
+
+    message.innerHTML =
+        "Sending payment request...";
+
+    try {
+
+        const response = await fetch(
+            "/payments/deposit",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body: JSON.stringify({
+                    amount: amount,
+                    phone: phone
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            message.innerHTML =
+                "<span class='success'>" +
+                "M-PESA request sent. " +
+                "Check your phone and enter your PIN." +
+                "</span>";
+
+        } else {
+
+            message.innerHTML =
+                "<span class='danger'>" +
+                (data.message ||
+                "Payment request failed.") +
+                "</span>";
+
+        }
+
+    } catch (error) {
+
+        message.innerHTML =
+            "<span class='danger'>" +
+            "Unable to connect to payment server." +
+            "</span>";
+
+    }
+
+});
+
+</script>
+
 {% endblock %}
