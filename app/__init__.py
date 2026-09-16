@@ -22,11 +22,13 @@ def create_app():
     from app.routes.main import main
     from app.routes.payments import payments
     from app.routes.admin import admin
+    from app.mpesa import mpesa_bp
 
     app.register_blueprint(auth)
     app.register_blueprint(main)
     app.register_blueprint(payments)
     app.register_blueprint(admin)
+    app.register_blueprint(mpesa_bp)
 
     # Create database tables
     with app.app_context():
